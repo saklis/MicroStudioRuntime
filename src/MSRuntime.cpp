@@ -69,10 +69,47 @@ void MSRuntime::RuntimeInitialized()
     MSRuntime::GetInstance()->_isRuntimeInitialized = true;
 }
 
+void MSRuntime::UpdateKeyboard(int keyCode, bool isDown)
+{
+    MSRuntime* instance = MSRuntime::GetInstance();
+    if (instance->_isRuntimeInitialized == false) return;
+
+    char code [33];
+    itoa (keyCode,code,10);
+    
+    char key = (char)keyCode;
+    std::string keyStr = std::string(1, key);
+
+    // Create the event object
+    JSValue event = JS_NewObject(instance->_context);
+    if (isDown) JS_SetPropertyStr(instance->_context, event, "type", JS_NewString(instance->_context, "keydown"));
+    else JS_SetPropertyStr(instance->_context, event, "type", JS_NewString(instance->_context, "keyup"));
+    JS_SetPropertyStr(instance->_context, event, "code", JS_NewString(instance->_context, code));
+    JS_SetPropertyStr(instance->_context, event, "key", JS_NewString(instance->_context, keyStr.c_str()));
+
+    // Get the 'document' object
+    JSValue global_obj = JS_GetGlobalObject(instance->_context);
+    JSValue document = JS_GetPropertyStr(instance->_context, global_obj, "document");
+
+    // Get the 'dispatchEvent' function
+    JSValue dispatchEventFunc = JS_GetPropertyStr(instance->_context, document, "dispatchEvent");
+
+    // Prepare arguments for 'dispatchEvent'
+    JSValue args[1] = { event };
+
+    // Call 'dispatchEvent' method
+    JS_Call(instance->_context, dispatchEventFunc, document, 1, args);
+
+    // Clean up
+    JS_FreeValue(instance->_context, dispatchEventFunc);
+    JS_FreeValue(instance->_context, document);
+    JS_FreeValue(instance->_context, global_obj);
+    JS_FreeValue(instance->_context, event);
+}
+
 void MSRuntime::Tick()
 {
     MSRuntime* instance = MSRuntime::GetInstance();
-    
     if (instance->_isRuntimeInitialized == false) return;
 
     // Retrieve the 'update' function
@@ -103,7 +140,7 @@ void MSRuntime::Screen_DrawSprite(const char *sprite, double x, double y, double
 
     DrawTexturePro(*texture, 
                    { 0, 0, (float)texture->width, (float)texture->height }, 
-                   { (float)(x - texture->width/2), (float)(450/2 - texture->height/2), (float)w, (float)h }, { 0, 0 }, 
+                   { (float)(x + 800/2 - texture->width/2), (float)(-y + 450/2 - texture->height/2), (float)w, (float)h }, { 0, 0 }, 
                    0, WHITE);
 }
 

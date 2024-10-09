@@ -33,9 +33,21 @@ int main(void)
     }
 
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!WindowShouldClose()) // Detect window close button or ESC key
     {
-        // Update
+        // update keyboard
+        for (int key = KEY_SPACE; key <= KEY_KB_MENU; key++)
+        {
+            if (IsKeyPressed(key))
+            {
+                // Key 'key' was pressed
+                MSRuntime::UpdateKeyboard(key, true);
+            }
+            else if (IsKeyReleased(key))
+            {
+                MSRuntime::UpdateKeyboard(key, false);
+            }
+        }
 
         // Draw
         BeginDrawing();

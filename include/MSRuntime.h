@@ -43,6 +43,7 @@ public:
     static MSRuntime_ReturnValue Free(std::string& errorMsg);
 
     static void RuntimeInitialized();
+    static void UpdateKeyboard(int keyCode, bool isDown);
     static void Tick();
 
     static void Screen_Clear(const char* colorText);

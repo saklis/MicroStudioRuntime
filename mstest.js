@@ -7,18 +7,21 @@ window.exported_project = true;
 window.ms_use_server = false;
 
 globalThis.microScriptCode = `function()
-x = -100
-
 init = function()
+  x = 0
+  y = 0
 end
 
 update = function()
-  x += 2
+  if keyboard.W then y += 2  end
+  if keyboard.S then y -= 2 end
+  if keyboard.A then x -= 2 end
+  if keyboard.D then x += 2 end
 end
 
 draw = function()
   screen.clear()
-  screen.drawSprite("icon", x, 0, 50, 50)
+  screen.drawSprite("icon", x, y, 50, 50)
 end
 end()`;
 

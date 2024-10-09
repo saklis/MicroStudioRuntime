@@ -9,7 +9,21 @@ var console = {
 
 // create window variable to simulate browser window
 var window = {};
-var document = {};
+var document = {
+  listeners: {},
+  addEventListener: function (type, callback) {
+    if (!this.listeners[type]) {
+      this.listeners[type] = [];
+    }
+    this.listeners[type].push(callback);
+  },
+  dispatchEvent: function (event) {
+    const listeners = this.listeners[event.type] || [];
+    for (const listener of listeners) {
+      listener.call(this, event);
+    }
+  },
+};
 
 requestAnimationFrame = function(callback) {
   // do nothing
@@ -654,7 +668,7 @@ CGameTick = function()
       this.listener = listener;
       this.screen = new Screen(this);
       this.audio = new AudioCore(this);
-      // this.keyboard = new Keyboard();
+      this.keyboard = new Keyboard();
       // this.gamepad = new Gamepad();
       // this.asset_manager = new AssetManager(this);
       // this.sprites = {};
@@ -857,7 +871,7 @@ CGameTick = function()
       global = {
         screen: this.screen.getInterface(),
         // audio: this.audio.getInterface(),
-        // keyboard: this.keyboard.keyboard,
+        keyboard: this.keyboard.keyboard,
         // gamepad: this.gamepad.status,
         // sprites: this.sprites,
         // sounds: this.sounds,
@@ -4043,9 +4057,9 @@ CGameTick = function()
   
     Keyboard.prototype.keydown = function(event) {
       var code, key;
-      if (!event.altKey && !event.ctrlKey && !event.metaKey && !/Escape|(F\d+)/.test(event.key)) {
-        event.preventDefault();
-      }
+      // if (!event.altKey && !event.ctrlKey && !event.metaKey && !/Escape|(F\d+)/.test(event.key)) {
+      //   event.preventDefault();
+      // }
       code = event.code;
       key = event.key;
       this.keyboard[this.convertCode(code)] = 1;
