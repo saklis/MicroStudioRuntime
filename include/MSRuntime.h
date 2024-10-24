@@ -1,10 +1,11 @@
-#pragma once
+﻿#pragma once
 
 #include <array>
 #include <string>
 #include <memory>
 
 #include "raylib.h"
+
 #include "quickjs.h"
 
 #include "AssetsManager.h"

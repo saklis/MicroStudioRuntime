@@ -1,4 +1,4 @@
-#include "AssetsManager.h"
+﻿#include "AssetsManager.h"
 
 #include <filesystem>
 
@@ -11,7 +11,7 @@ bool MSAssetsManager::AssetsExists(const std::string assetsPath)
             if (std::filesystem::is_regular_file(entry.status())){
                 return true;
             }
-        }        
+        }
     }
 
     return false;

@@ -4062,8 +4062,8 @@ CGameTick = function()
       // }
       code = event.code;
       key = event.key;
-      this.keyboard[this.convertCode(code)] = 1;
-      this.keyboard[key.toUpperCase()] = 1;
+      this.keyboard[code] = 1;
+      this.keyboard[key] = 1;
       return this.updateDirectional();
     };
   

@@ -13,10 +13,10 @@ init = function()
 end
 
 update = function()
-  if keyboard.W then y += 2  end
-  if keyboard.S then y -= 2 end
-  if keyboard.A then x -= 2 end
-  if keyboard.D then x += 2 end
+  if keyboard.ARROW_UP then y += 2  end
+  if keyboard.ARROW_DOWN then y -= 2 end
+  if keyboard.ARROW_LEFT then x -= 2 end
+  if keyboard.ARROW_RIGHT then x += 2 end
 end
 
 draw = function()

@@ -31,6 +31,12 @@
 *.out
 *.app
 
+# CLion project files
+.idea/*
+
+# build output
+build/*
+
 # MicroStudio JS files
 microstudio/compiler.js
 microstudio/microengine.js

@@ -1,3 +1,6 @@
+﻿//
+// Created by Sebastian on 24.10.2024.
+//
 #include <cstdio>
 #include <cstring>
 
@@ -74,18 +77,20 @@ void MSRuntime::UpdateKeyboard(int keyCode, bool isDown)
     MSRuntime* instance = MSRuntime::GetInstance();
     if (instance->_isRuntimeInitialized == false) return;
 
-    char code [33];
-    itoa (keyCode,code,10);
-    
-    char key = (char)keyCode;
-    std::string keyStr = std::string(1, key);
+    // char code [33];
+    // itoa (keyCode,code,10);
+
+    // char key = (char)keyCode;
+    // std::string keyStr = std::string(1, key);
+
+    auto& microKey = Ray2MicroKeyMap[keyCode];
 
     // Create the event object
     JSValue event = JS_NewObject(instance->_context);
     if (isDown) JS_SetPropertyStr(instance->_context, event, "type", JS_NewString(instance->_context, "keydown"));
     else JS_SetPropertyStr(instance->_context, event, "type", JS_NewString(instance->_context, "keyup"));
-    JS_SetPropertyStr(instance->_context, event, "code", JS_NewString(instance->_context, code));
-    JS_SetPropertyStr(instance->_context, event, "key", JS_NewString(instance->_context, keyStr.c_str()));
+    JS_SetPropertyStr(instance->_context, event, "code", JS_NewString(instance->_context, microKey.first));
+    JS_SetPropertyStr(instance->_context, event, "key", JS_NewString(instance->_context, microKey.second));
 
     // Get the 'document' object
     JSValue global_obj = JS_GetGlobalObject(instance->_context);
@@ -134,13 +139,13 @@ void MSRuntime::Tick()
 void MSRuntime::Screen_DrawSprite(const char *sprite, double x, double y, double w, double h)
 {
     MSRuntime* instance = MSRuntime::GetInstance();
-    
+
     Texture2D* texture = instance->_assets->GetSprite(sprite);
     if (!texture) return; // if the sprite doesn't exist, return
 
-    DrawTexturePro(*texture, 
-                   { 0, 0, (float)texture->width, (float)texture->height }, 
-                   { (float)(x + 800/2 - texture->width/2), (float)(-y + 450/2 - texture->height/2), (float)w, (float)h }, { 0, 0 }, 
+    DrawTexturePro(*texture,
+                   { 0, 0, (float)texture->width, (float)texture->height },
+                   { (float)(x + 800/2 - texture->width/2), (float)(-y + 450/2 - texture->height/2), (float)w, (float)h }, { 0, 0 },
                    0, WHITE);
 }
 

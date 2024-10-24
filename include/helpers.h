@@ -1,12 +1,14 @@
-#pragma once
+﻿#pragma once
 
 #include <stdio.h>
-#include <string.h>
+#include <string>
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h> // For fmodf and fabsf
+#include <unordered_map>
+#include <utility>
 
-#include "raylib.h"
+#include <raylib.h>
 
 // Generated with ChatGPT. Can't be bothered to check all those ifs :D
 int ParseColor(const char* colorStr, Color* color)
@@ -308,3 +310,120 @@ int ParseColor(const char* colorStr, Color* color)
 
     return 0; // Success
 }
+
+extern std::unordered_map<int32_t, std::pair<const char*, const char*>> Ray2MicroKeyMap = {
+    {KEY_NULL, {"UNIDENTIFIED", "UNIDENTIFIED"}}, // Key: NULL, used for no key pressed
+    // Alphanumeric keys
+    {KEY_APOSTROPHE,    {"'", "QUOTE"}},       // Key: '
+    {KEY_COMMA,         {",", "COMMA"}},       // Key: ,
+    {KEY_MINUS,         {"-", "MINUS"}},       // Key: -
+    {KEY_PERIOD,        {".", "PERIOD"}},       // Key: .
+    {KEY_SLASH,         {"/", "SLASH"}},       // Key: /
+    {KEY_ZERO,          {"0", "DIGIT_0"}},       // Key: 0
+    {KEY_ONE,           {"1", "DIGIT_1"}},       // Key: 1
+    {KEY_TWO,           {"2", "DIGIT_2"}},       // Key: 2
+    {KEY_THREE,         {"3", "DIGIT_3"}},       // Key: 3
+    {KEY_FOUR,          {"4", "DIGIT_4"}},       // Key: 4
+    {KEY_FIVE,          {"5", "DIGIT_5"}},       // Key: 5
+    {KEY_SIX,           {"6", "DIGIT_6"}},       // Key: 6
+    {KEY_SEVEN,         {"7", "DIGIT_7"}},       // Key: 7
+    {KEY_EIGHT,         {"8", "DIGIT_8"}},       // Key: 8
+    {KEY_NINE,          {"9", "DIGIT_9"}},       // Key: 9
+    {KEY_SEMICOLON,     {";", "SEMICOLON"}},    // Key: ;
+    {KEY_EQUAL,         {"=", "EQUAL"}},        // Key: =
+    {KEY_A,             {"A", "KEY_A"}},        // Key: A | a
+    {KEY_B,             {"B", "KEY_B"}},        // Key: B | b
+    {KEY_C,             {"C", "KEY_C"}},        // Key: C | c
+    {KEY_D,             {"D", "KEY_D"}},        // Key: D | d
+    {KEY_E,             {"E", "KEY_E"}},        // Key: E | e
+    {KEY_F,             {"F", "KEY_F"}},        // Key: F | f
+    {KEY_G,             {"G", "KEY_G"}},        // Key: G | g
+    {KEY_H,             {"H", "KEY_H"}},        // Key: H | h
+    {KEY_I,             {"I", "KEY_I"}},        // Key: I | i
+    {KEY_J,             {"J", "KEY_J"}},        // Key: J | j
+    {KEY_K,             {"K", "KEY_K"}},        // Key: K | k
+    {KEY_L,             {"L", "KEY_L"}},        // Key: L | l
+    {KEY_M,             {"M", "KEY_M"}},        // Key: M | m
+    {KEY_N,             {"N", "KEY_N"}},        // Key: N | n
+    {KEY_O,             {"O", "KEY_O"}},        // Key: O | o
+    {KEY_P,             {"P", "KEY_P"}},        // Key: P | p
+    {KEY_Q,             {"Q", "KEY_Q"}},        // Key: Q | q
+    {KEY_R,             {"R", "KEY_R"}},        // Key: R | r
+    {KEY_S,             {"S", "KEY_S"}},        // Key: S | s
+    {KEY_T,             {"T", "KEY_T"}},        // Key: T | t
+    {KEY_U,             {"U", "KEY_U"}},        // Key: U | u
+    {KEY_V,             {"V", "KEY_V"}},        // Key: V | v
+    {KEY_W,             {"W", "KEY_W"}},        // Key: W | w
+    {KEY_X,             {"X", "KEY_X"}},        // Key: X | x
+    {KEY_Y,             {"Y", "KEY_Y"}},        // Key: Y | y
+    {KEY_Z,             {"Z", "KEY_Z"}},        // Key: Z | z
+    {KEY_LEFT_BRACKET,  {"[", "BRACKET_LEFT"}}, // Key: [
+    {KEY_BACKSLASH,     {"\\", "BACKSLASH"}},   // Key: '\'
+    {KEY_RIGHT_BRACKET, {"]", "BRACKET_RIGHT"}},// Key: ]
+    {KEY_GRAVE,         {"`", "BACKQUOTE"}},    // Key: `
+    // Function keys
+    {KEY_SPACE,         {" ", "SAPCE"}},      // Key: Space
+    {KEY_ESCAPE,        {"ESCAPE", "ESCAPE"}},      // Key: Esc
+    {KEY_ENTER,         {"ENTER", "ENTER"}},      // Key: Enter 
+    {KEY_TAB,           {"TAB", "TAB"}},      // Key: Tab 
+    {KEY_BACKSPACE,     {"BACKSPACE", "BACKSPACE"}},      // Key: Backspace 
+    {KEY_INSERT,        {"INSERT", "INSERT"}},      // Key: Ins 
+    {KEY_DELETE,        {"DELETE", "DELETE"}},      // Key: Del 
+    {KEY_RIGHT,         {"ARROWRIGHT", "ARROW_RIGHT"}},         // Key: Cursor right 
+    {KEY_LEFT,          {"ARROWLEFT", "ARROW_LEFT"}},           // Key: Cursor left 
+    {KEY_DOWN,          {"ARROWDOWN", "ARROW_DOWN"}},           // Key: Cursor down 
+    {KEY_UP,            {"ARROWUP", "ARROW_UP"}},               // Key: Cursor up 
+    {KEY_PAGE_UP,       {"PAGEUP", "PAGE_UP"}},      // Key: Page up 
+    {KEY_PAGE_DOWN,     {"PAGEDOWN", "PAGE_DOWN"}},      // Key: Page down 
+    {KEY_HOME,          {"HOME", "HOME"}},      // Key: Home 
+    {KEY_END,           {"END", "END"}},      // Key: End 
+    {KEY_CAPS_LOCK,     {"CAPSLOCK", "CAPS_LOCK"}},      // Key: Caps lock 
+    {KEY_SCROLL_LOCK,   {"TAB", "TAB"}},      // Key: Scroll down
+    {KEY_NUM_LOCK,      {"", ""}},      // Key: Num lock
+    {KEY_PRINT_SCREEN,  {"PRINTSCREEN", "PRINT_SCREEN"}},      // Key: Print screen
+    {KEY_PAUSE,         {"PAUSE", "PAUSE"}},      // Key: Pause
+    {KEY_F1,            {"F1", "F_1"}},      // Key: F1
+    {KEY_F2,            {"F2", "F_2"}},      // Key: F2
+    {KEY_F3,            {"F3", "F_3"}},      // Key: F3
+    {KEY_F4,            {"F4", "F_4"}},      // Key: F4
+    {KEY_F5,            {"F5", "F_5"}},      // Key: F5
+    {KEY_F6,            {"F6", "F_6"}},      // Key: F6
+    {KEY_F7,            {"F7", "F_7"}},      // Key: F7
+    {KEY_F8,            {"F8", "F_8"}},      // Key: F8
+    {KEY_F9,            {"F9", "F_9"}},      // Key: F9
+    {KEY_F10,           {"F10", "F_10"}},      // Key: F10
+    {KEY_F11,           {"F11", "F_11"}},      // Key: F11
+    {KEY_F12,           {"F12", "F_12"}},      // Key: F12
+    {KEY_LEFT_SHIFT,    {"SHIFT", "SHIFT_LEFT"}},      // Key: Shift left
+    {KEY_LEFT_CONTROL,  {"CONTROL", "CONTROL_LEFT"}},      // Key: Control left
+    {KEY_LEFT_ALT,      {"ALT", "ALT_LEFT"}},      // Key: Alt left
+    {KEY_LEFT_SUPER,    {"META", "META_LEFT"}},      // Key: Super left
+    {KEY_RIGHT_SHIFT,   {"SHIFT", "SHIFT_RIGHT"}},      // Key: Shift right
+    {KEY_RIGHT_CONTROL, {"CONTROL", "CONTROL_RIGHT"}},      // Key: Control right
+    {KEY_RIGHT_ALT,     {"ALTGRAPH", "ALT_RIGHT"}},      // Key: Alt right
+    {KEY_RIGHT_SUPER,   {"CONTEXTMENU", "CONTEXT_MENU"}},      // Key: Super right
+    {KEY_KB_MENU,       {"", ""}},      // Key: KB menu
+    // Keypad keys
+    {KEY_KP_0,          {"", ""}},      // Key: Keypad 0
+    {KEY_KP_1,          {"", ""}},      // Key: Keypad 1
+    {KEY_KP_2,          {"", ""}},      // Key: Keypad 2
+    {KEY_KP_3,          {"", ""}},      // Key: Keypad 3
+    {KEY_KP_4,          {"", ""}},      // Key: Keypad 4
+    {KEY_KP_5,          {"", ""}},      // Key: Keypad 5
+    {KEY_KP_6,          {"", ""}},      // Key: Keypad 6
+    {KEY_KP_7,          {"", ""}},      // Key: Keypad 7
+    {KEY_KP_8,          {"", ""}},      // Key: Keypad 8
+    {KEY_KP_9,          {"", ""}},      // Key: Keypad 9
+    {KEY_KP_DECIMAL,    {"", ""}},      // Key: Keypad .
+    {KEY_KP_DIVIDE,     {"", ""}},      // Key: Keypad /
+    {KEY_KP_MULTIPLY,   {"", ""}},      // Key: Keypad *
+    {KEY_KP_SUBTRACT,   {"", ""}},      // Key: Keypad -
+    {KEY_KP_ADD,        {"", ""}},      // Key: Keypad +
+    {KEY_KP_ENTER,      {"", ""}},      // Key: Keypad Enter
+    {KEY_KP_EQUAL,      {"", ""}},      // Key: Keypad =
+    // Android key buttons
+    {KEY_BACK,          {"", ""}},        // Key: Android back button
+    {KEY_MENU,          {"", ""}},       // Key: Android menu button
+    {KEY_VOLUME_UP,     {"", ""}},       // Key: Android volume up button
+    {KEY_VOLUME_DOWN,   {"", ""}}        // Key: Android volume down button
+};

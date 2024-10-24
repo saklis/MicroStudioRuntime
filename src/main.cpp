@@ -1,5 +1,4 @@
-#include "raylib.h"
-#include "quickjs.h"
+﻿#include "raylib.h"
 
 #include "MSRuntime.h"
 

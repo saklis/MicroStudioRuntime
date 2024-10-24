@@ -10,13 +10,12 @@ To compile:
 2. Install MINGW 32bit
 3. Install Raylib using MINGW 32 console
 4. Compile or download binaries for QuickJS. For Windows, you can use https://github.com/mengmo/QuickJS-Windows-Build
-5. Install Premake5
+5. Install CMake
 6. For Windows, install GNU Make for Windows https://gnuwin32.sourceforge.net/packages/make.htm
-7. Clone MicroStudio Runtime
-8. Update premake5.lua to match your environment
-9. Update .vscode/c_cpp_properties.json to match your environment
-10. Call "premake5 gmake"
-11. Build
+7. Clone MicroStudioRuntime
+8. Update CMakeLists.txt to match your environment
+10. Un Windows update build.bat to point to mingw compilers.
+11. Build / execute build.bat
 12. Run
 
 After you export your project from MicroStudio as HTML, you need to prepare files:
