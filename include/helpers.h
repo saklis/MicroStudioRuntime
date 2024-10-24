@@ -404,22 +404,22 @@ extern std::unordered_map<int32_t, std::pair<const char*, const char*>> Ray2Micr
     {KEY_RIGHT_SUPER,   {"CONTEXTMENU", "CONTEXT_MENU"}},      // Key: Super right
     {KEY_KB_MENU,       {"", ""}},      // Key: KB menu
     // Keypad keys
-    {KEY_KP_0,          {"", ""}},      // Key: Keypad 0
-    {KEY_KP_1,          {"", ""}},      // Key: Keypad 1
-    {KEY_KP_2,          {"", ""}},      // Key: Keypad 2
-    {KEY_KP_3,          {"", ""}},      // Key: Keypad 3
-    {KEY_KP_4,          {"", ""}},      // Key: Keypad 4
-    {KEY_KP_5,          {"", ""}},      // Key: Keypad 5
-    {KEY_KP_6,          {"", ""}},      // Key: Keypad 6
-    {KEY_KP_7,          {"", ""}},      // Key: Keypad 7
-    {KEY_KP_8,          {"", ""}},      // Key: Keypad 8
-    {KEY_KP_9,          {"", ""}},      // Key: Keypad 9
-    {KEY_KP_DECIMAL,    {"", ""}},      // Key: Keypad .
-    {KEY_KP_DIVIDE,     {"", ""}},      // Key: Keypad /
-    {KEY_KP_MULTIPLY,   {"", ""}},      // Key: Keypad *
-    {KEY_KP_SUBTRACT,   {"", ""}},      // Key: Keypad -
-    {KEY_KP_ADD,        {"", ""}},      // Key: Keypad +
-    {KEY_KP_ENTER,      {"", ""}},      // Key: Keypad Enter
+    {KEY_KP_0,          {"0", "NUMPAD_0"}},      // Key: Keypad 0
+    {KEY_KP_1,          {"1", "NUMPAD_1"}},      // Key: Keypad 1
+    {KEY_KP_2,          {"2", "NUMPAD_2"}},      // Key: Keypad 2
+    {KEY_KP_3,          {"3", "NUMPAD_3"}},      // Key: Keypad 3
+    {KEY_KP_4,          {"4", "NUMPAD_4"}},      // Key: Keypad 4
+    {KEY_KP_5,          {"5", "NUMPAD_5"}},      // Key: Keypad 5
+    {KEY_KP_6,          {"6", "NUMPAD_6"}},      // Key: Keypad 6
+    {KEY_KP_7,          {"7", "NUMPAD_7"}},      // Key: Keypad 7
+    {KEY_KP_8,          {"8", "NUMPAD_8"}},      // Key: Keypad 8
+    {KEY_KP_9,          {"9", "NUMPAD_9"}},      // Key: Keypad 9
+    {KEY_KP_DECIMAL,    {",", "NUMPAD_DECIMAL"}},      // Key: Keypad .
+    {KEY_KP_DIVIDE,     {"/", "NUMPAD_DIVIDE"}},      // Key: Keypad /
+    {KEY_KP_MULTIPLY,   {"*", "NUMPAD_MULTIPLY"}},      // Key: Keypad *
+    {KEY_KP_SUBTRACT,   {"-", "NUMPAD_SUBTRACT"}},      // Key: Keypad -
+    {KEY_KP_ADD,        {"+", "NUMPAD_ADD"}},      // Key: Keypad +
+    {KEY_KP_ENTER,      {"ENTER", "NUMPAD_ENTER"}},      // Key: Keypad Enter
     {KEY_KP_EQUAL,      {"", ""}},      // Key: Keypad =
     // Android key buttons
     {KEY_BACK,          {"", ""}},        // Key: Android back button

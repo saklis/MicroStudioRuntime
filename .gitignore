@@ -35,7 +35,8 @@
 .idea/*
 
 # build output
-build/*
+/cmake-build-debug
+/build
 
 # MicroStudio JS files
 microstudio/compiler.js
