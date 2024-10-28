@@ -8,7 +8,7 @@ Project is configured to use Premake and MINGW G++ i686 compiler from MSYS2.
 To compile:
 1. Install MSYS2
 2. Install MINGW 32bit
-3. Install Raylib using MINGW 32 console
+3. Compile or download Raylib binaries for MINGW.
 4. Compile or download binaries for QuickJS. For Windows, you can use https://github.com/mengmo/QuickJS-Windows-Build
 5. Install CMake
 6. For Windows, install GNU Make for Windows https://gnuwin32.sourceforge.net/packages/make.htm
