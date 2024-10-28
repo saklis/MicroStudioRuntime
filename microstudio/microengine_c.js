@@ -2821,7 +2821,8 @@ CGameTick = function()
           return screen.clear(color);
         },
         setColor: function(color) {
-          return screen.setColor(color);
+          CSetColor(color);
+          //return screen.setColor(color);
         },
         setAlpha: function(alpha) {
           return screen.setAlpha(alpha);

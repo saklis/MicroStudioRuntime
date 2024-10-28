@@ -13,15 +13,16 @@ init = function()
 end
 
 update = function()
-  if keyboard.ARROW_UP then y += 2  end
-  if keyboard.ARROW_DOWN then y -= 2 end
-  if keyboard.ARROW_LEFT then x -= 2 end
-  if keyboard.ARROW_RIGHT then x += 2 end
+  if keyboard.UP then y += 2  end
+  if keyboard.DOWN then y -= 2 end
+  if keyboard.LEFT then x -= 2 end
+  if keyboard.RIGHT then x += 2 end
 end
 
 draw = function()
   screen.clear()
-  screen.drawSprite("icon", x, y, 50, 50)
+  screen.setColor( "rgba(255,255,255,0.5)" )
+  screen.drawSprite("icon", x, y, 200, 200)
 end
 end()`;
 
