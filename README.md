@@ -22,7 +22,7 @@ After you export your project from MicroStudio as HTML, you need to prepare file
 * Take a look at included mstest.js to see how to change your index.html file.
 * Copy all assets folders into /assets directory
 
-MicroStudio Runtime is in very early stages and only very few features work! To see currently supported API check include/JS_API.h
+MicroStudio Runtime is in very early stages and only very few features work! To see currently supported API check include/JS_API.h and `js_raylib_funcs` array.
 Using any function outside the supported list will:
 1) do nothing
 2) crash the Runtime
