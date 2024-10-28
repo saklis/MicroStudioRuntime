@@ -3,7 +3,7 @@
 MicroStudio Native Runtime executes MicroStudio game (exported as HTML) localy using QuickJS and then outputs result using Raylib.
 
 ## Project setup
-Project is configured to use Premake and MINGW G++ i686 compiler from MSYS2.
+Project is configured to use CMake and MINGW G++ i686 compiler from MSYS2.
 
 To compile:
 1. Install MSYS2
