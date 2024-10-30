@@ -21,8 +21,15 @@ end
 
 draw = function()
   screen.clear()
-  screen.setColor( "rgba(255,255,255,0.5)" )
+  //screen.setColor( "rgba(255,0,0,1)" )
+  //screen.setAlpha(50)
+  
   screen.drawSprite("icon", x, y, 200, 200)
+  
+  screen.setFont("BitCell")
+  if screen.isFontReady("BitCell") then
+    screen.drawText("Font BitCell found!", 0, 0, 50, "#FFFFFF")
+  end
 end
 end()`;
 

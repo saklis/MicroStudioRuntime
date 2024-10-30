@@ -11,7 +11,7 @@
 #include "helpers.h"
 
 MSRuntime_ReturnValue MSRuntime::Init(std::string &errorMsg) {
-    MSRuntime *instance = MSRuntime::GetInstance();
+    MSRuntime* instance = MSRuntime::GetInstance();
 
     instance->_runtime = JS_NewRuntime();
     if (instance->_runtime == nullptr) {
@@ -36,7 +36,7 @@ MSRuntime_ReturnValue MSRuntime::Init(std::string &errorMsg) {
 
 MSRuntime_ReturnValue MSRuntime::LoadAssets(std::string &errorMsg) {
     if (MSAssetsManager::AssetsExists(MSAssetsManager::DefaultAssetsPath)) {
-        MSRuntime *instance = MSRuntime::GetInstance();
+        MSRuntime* instance = MSRuntime::GetInstance();
         if (instance->_assets->LoadAssets(MSAssetsManager::DefaultAssetsPath, errorMsg)) {
             return OK;
         } else {
@@ -48,12 +48,16 @@ MSRuntime_ReturnValue MSRuntime::LoadAssets(std::string &errorMsg) {
 }
 
 MSRuntime_ReturnValue MSRuntime::LoadGameSource(std::string &errorMsg) {
-    MSRuntime *instance = MSRuntime::GetInstance();
+    MSRuntime* instance = MSRuntime::GetInstance();
     return instance->RegisterGameSource(errorMsg);
 }
 
 MSRuntime_ReturnValue MSRuntime::Free(std::string &errorMsg) {
-    MSRuntime *instance = MSRuntime::GetInstance();
+    MSRuntime* instance = MSRuntime::GetInstance();
+
+    if (!instance->_assets->UnloadAssets(errorMsg)) {
+        return ErrorWhileUnloadingAssets;
+    }
 
     JS_FreeContext(instance->_context);
     JS_FreeRuntime(instance->_runtime);
@@ -63,7 +67,7 @@ MSRuntime_ReturnValue MSRuntime::Free(std::string &errorMsg) {
 }
 
 void MSRuntime::SetScreenSize(const int screenWidth, const int screenHeight) {
-    MSRuntime *instance = MSRuntime::GetInstance();
+    MSRuntime* instance = MSRuntime::GetInstance();
     instance->_screenWidth = screenWidth;
     instance->_screenWidthHalf = screenWidth / 2;
     instance->_screenHeight = screenHeight;
@@ -77,42 +81,60 @@ void MSRuntime::SetScreenSize(const int screenWidth, const int screenHeight) {
     } else {
         instance->_orientation = PORTRAIT;
         instance->_screenHeightRatio = static_cast<float>(screenHeight) / (
-                                          static_cast<float>(screenHeight) / static_cast<float>(screenWidth) * 200.0f);
+                                           static_cast<float>(screenHeight) / static_cast<float>(screenWidth) * 200.0f);
         instance->_screenWidthRatio = static_cast<float>(screenWidth) / 200.0f; // in PORTRAIT x is <-100,100>
     }
 }
 
-void MSRuntime::Screen_Clear(const char *colorText) {
+void MSRuntime::Screen_Clear(const char* colorText) {
     if (!MSRuntime::GetInstance()->_isRuntimeInitialized) return; // only allow to clear when runtime is initialized
     Color clearColor;
     if (colorText == nullptr) {
         clearColor = BLACK;
     } else {
-        ParseColor(colorText, &clearColor);
+        int alpha;
+        ParseColor(colorText, &clearColor, &alpha);
     }
     ClearBackground(clearColor); // raylib
 }
 
-void MSRuntime::Screen_SetColor(const char *colorText) {
-    MSRuntime *instance = MSRuntime::GetInstance();
+void MSRuntime::Screen_SetColor(const char* colorText) {
+    MSRuntime* instance = MSRuntime::GetInstance();
 
     if (colorText == nullptr) {
-        instance->_drawColor = WHITE;
+        instance->_currentColor = WHITE;
     } else {
         Color drawColor;
-        ParseColor(colorText, &drawColor);
-        instance->_drawColor = drawColor;
+        int alpha;
+        ParseColor(colorText, &drawColor, &alpha);
+        instance->_currentColor = drawColor;
+        if (alpha != -1) {
+            instance->_currentAlpha = alpha;
+        }
     }
 }
 
-void MSRuntime::Screen_DrawSprite(const char *sprite, const float x, const float y, const float w, const float h) {
-    const MSRuntime *instance = MSRuntime::GetInstance();
+void MSRuntime::Screen_SetAlpha(int alpha) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+    instance->_currentAlpha = alpha;
+}
 
-    const Texture2D *texture = instance->_assets->GetSprite(sprite);
+void MSRuntime::Screen_SetFont(const char* font) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+    instance->_currentFont = font;
+}
+
+void MSRuntime::Screen_DrawSprite(const char* sprite, const float x, const float y, const float w, const float h) {
+    const MSRuntime* instance = MSRuntime::GetInstance();
+
+    const Texture2D* texture = instance->_assets->GetSprite(sprite);
     if (!texture) return; // if the sprite doesn't exist, return
 
     float nX, nY, nW, nH;
     instance->CalculateNativeCoordinates(x, y, w, h, &nX, &nY, &nW, &nH);
+
+    Color tint = instance->_currentColor;
+    tint.a = instance->_currentAlpha;
 
     DrawTexturePro(*texture,
                    {0, 0, static_cast<float>(texture->width), static_cast<float>(texture->height)},
@@ -121,10 +143,53 @@ void MSRuntime::Screen_DrawSprite(const char *sprite, const float x, const float
                        nW, nH,
                    },
                    {nW / 2, nH / 2},
-                   0, instance->_drawColor);
+                   0, tint);
 }
 
-void MSRuntime::CalculateNativeCoordinates(const float x, const float y, const float w, const float h, float *n_x, float *n_y, float *n_w, float *n_h) const {
+void MSRuntime::Screen_DrawText(const char* text, float x, float y, float size, const char* colorText) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+
+    Color color;
+    int alpha;
+    if (colorText != nullptr) {
+        ParseColor(colorText, &color, &alpha);
+    } else {
+        color = instance->_currentColor;
+        color.a = instance->_currentAlpha;
+    }
+
+    Font* font = instance->_assets->GetFont(instance->_currentFont);
+    if (font == nullptr) return; // if the font doesn't exist, return
+
+    float n_x = 0.0f, n_y = 0.0f;
+    instance->CalculateNativeCoordinates(x, y, &n_x, &n_y);
+
+    float scaledSize;
+    if (instance->_orientation == LANDSCAPE) {
+        scaledSize = size * instance->_screenHeightRatio;
+    } else {
+        scaledSize = size * instance->_screenWidthRatio;
+    }
+
+    scaledSize *= 1.175; // todo: NO IDEA WHY THIS IS NEEDED!
+    // maybe because of the requirement of the clear type fonts to be loaded in big size?
+
+    Vector2 textSize = MeasureTextEx(*font, text, scaledSize, 0);
+    DrawTextEx(*font, text, {n_x - textSize.x / 2, n_y - textSize.y / 2}, scaledSize, 0, color);
+}
+
+bool MSRuntime::Screen_IsFontReady(const char* font_name) {
+    const MSRuntime* instance = MSRuntime::GetInstance();
+    return instance->_assets->GetFont(font_name) != nullptr;
+}
+
+void MSRuntime::CalculateNativeCoordinates(const float x, const float y, float* n_x, float* n_y) const {
+    *n_x = x * _screenWidthRatio + static_cast<float>(_screenWidthHalf);
+    *n_y = -y * _screenHeightRatio + static_cast<float>(_screenHeightHalf);
+}
+
+void MSRuntime::CalculateNativeCoordinates(const float x, const float y, const float w, const float h, float* n_x,
+                                           float* n_y, float* n_w, float* n_h) const {
     *n_x = x * _screenWidthRatio + static_cast<float>(_screenWidthHalf);
     *n_y = -y * _screenHeightRatio + static_cast<float>(_screenHeightHalf);
     *n_w = w * _screenWidthRatio;
@@ -136,7 +201,7 @@ void MSRuntime::RuntimeInitialized() {
 }
 
 void MSRuntime::UpdateKeyboard(const int keyCode, const bool isDown) {
-    MSRuntime *instance = MSRuntime::GetInstance();
+    MSRuntime* instance = MSRuntime::GetInstance();
     if (instance->_isRuntimeInitialized == false) return;
 
     auto &[code, key] = Ray2MicroKeyMap[keyCode];
@@ -169,7 +234,7 @@ void MSRuntime::UpdateKeyboard(const int keyCode, const bool isDown) {
 }
 
 void MSRuntime::Tick() {
-    MSRuntime *instance = MSRuntime::GetInstance();
+    MSRuntime* instance = MSRuntime::GetInstance();
     if (instance->_isRuntimeInitialized == false) return;
 
     // Retrieve the 'update' function
@@ -182,7 +247,7 @@ void MSRuntime::Tick() {
 
         if (JS_IsException(result)) {
             const JSValue exception = JS_GetException(instance->_context);
-            const char *error_str = JS_ToCString(instance->_context, exception);
+            const char* error_str = JS_ToCString(instance->_context, exception);
             JS_FreeCString(instance->_context, error_str);
             JS_FreeValue(instance->_context, exception);
         }
@@ -230,8 +295,8 @@ MSRuntime_ReturnValue MSRuntime::RegisterGameSource(std::string &errorMsg) const
     return retVal;
 }
 
-MSRuntime_ReturnValue MSRuntime::RegisterJSFileInQuickJS(const char *filePath, std::string &errorMsg) const {
-    FILE *libFile = fopen(filePath, "rb");
+MSRuntime_ReturnValue MSRuntime::RegisterJSFileInQuickJS(const char* filePath, std::string &errorMsg) const {
+    FILE* libFile = fopen(filePath, "rb");
     // check if file exists
     if (libFile == nullptr) {
         errorMsg = "Required file '" + std::string(filePath) + "' doesn't exists";
@@ -244,7 +309,7 @@ MSRuntime_ReturnValue MSRuntime::RegisterJSFileInQuickJS(const char *filePath, s
     fseek(libFile, 0, SEEK_SET);
 
     // read file's content
-    char *fileContent = new char[fileSize + 1];
+    char* fileContent = new char[fileSize + 1];
     fread(fileContent, 1, fileSize, libFile);
     fileContent[fileSize] = 0;
 

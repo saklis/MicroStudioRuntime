@@ -17,7 +17,8 @@ enum MSRuntime_ReturnValue {
     MSLibraryFileDoesntExist = 3,
     ErrorEvaluathingJSFile = 4,
     ErrorWhileRegisteringJSFunctions = 5,
-    ErrorWhileLoadingAssets = 6
+    ErrorWhileLoadingAssets = 6,
+    ErrorWhileUnloadingAssets = 7
 };
 
 enum MSRuntime_Orientation {
@@ -69,9 +70,19 @@ public:
     // MICROSTUDIO API
 
     // SCREEN
-    static void Screen_Clear(const char *colorText);
-    static void Screen_SetColor(const char * colorText);
-    static void Screen_DrawSprite(const char *sprite, float x, float y, float w, float h);
+    static void Screen_Clear(const char* colorText);
+
+    static void Screen_SetColor(const char* colorText);
+
+    static void Screen_SetAlpha(int alpha);
+
+    static void Screen_SetFont(const char* font);
+
+    static void Screen_DrawSprite(const char* sprite, float x, float y, float w, float h);
+
+    static void Screen_DrawText(const char* text, float x, float y, float size, const char* colorText);
+
+    static bool Screen_IsFontReady(const char* font_name);
 
     // END OF MICROSTUDIO API
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -86,8 +97,8 @@ protected:
     bool _isRuntimeInitialized = false; // switched to true when JS runtime is initialized
 
     // QuickJS runtime - those are initialized in MSRuntime::Init. App SHOULD close, if initialization fails.
-    JSRuntime *_runtime = nullptr;
-    JSContext *_context = nullptr;
+    JSRuntime* _runtime = nullptr;
+    JSContext* _context = nullptr;
 
     // Native screen properties
     MSRuntime_Orientation _orientation = MSRuntime_Orientation::LANDSCAPE;
@@ -99,11 +110,19 @@ protected:
     float _screenHeightRatio;
 
     // Current draw color - set by Screen_SetColor and used as drawing color and to tint sprites
-    Color _drawColor = WHITE;
+    Color _currentColor = WHITE;
+
+    // Current draw alpha - set by Screen_SetColor and directly by Screen_SetAlpha
+    int _currentAlpha = 255;
+
+    // Current font for drawing text
+    std::string _currentFont = "BitCell";
 
     // Calculates native coordinates from coords in microstudio
-    void CalculateNativeCoordinates(float x, float y, float w, float h, float *n_x,
-                                    float *n_y, float *n_w, float *n_h) const;
+    void CalculateNativeCoordinates(float x, float y, float* n_x, float* n_y) const;
+
+    void CalculateNativeCoordinates(float x, float y, float w, float h, float* n_x,
+                                    float* n_y, float* n_w, float* n_h) const;
 
     // Asset library
     std::unique_ptr<MSAssetsManager> _assets = std::make_unique<MSAssetsManager>();
@@ -115,7 +134,7 @@ protected:
 
     MSRuntime_ReturnValue RegisterGameSource(std::string &errorMsg) const;
 
-    MSRuntime_ReturnValue RegisterJSFileInQuickJS(const char *filePath, std::string &errorMsg) const;
+    MSRuntime_ReturnValue RegisterJSFileInQuickJS(const char* filePath, std::string &errorMsg) const;
 
     // private constructor
     MSRuntime() = default;

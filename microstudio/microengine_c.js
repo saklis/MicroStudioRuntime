@@ -2825,7 +2825,8 @@ CGameTick = function()
           //return screen.setColor(color);
         },
         setAlpha: function(alpha) {
-          return screen.setAlpha(alpha);
+          CSetAlpha(alpha);
+          //return screen.setAlpha(alpha);
         },
         setPixelated: function(pixelated) {
           return screen.setPixelated(pixelated);
@@ -2840,7 +2841,8 @@ CGameTick = function()
           return screen.setRadialGradient(x, y, radius, c1, c2);
         },
         setFont: function(font) {
-          return screen.setFont(font);
+          CSetFont(font);
+          //return screen.setFont(font);
         },
         setTranslation: function(tx, ty) {
           return screen.setTranslation(tx, ty);
@@ -2895,7 +2897,8 @@ CGameTick = function()
           return screen.drawMap(map, x, y, w, h);
         },
         drawText: function(text, x, y, size, color) {
-          return screen.drawText(text, x, y, size, color);
+          CDrawText(text, x, y, size, color);
+          //return screen.drawText(text, x, y, size, color);
         },
         drawTextOutline: function(text, x, y, size, color) {
           return screen.drawTextOutline(text, x, y, size, color);
@@ -2937,10 +2940,12 @@ CGameTick = function()
           return screen.setCursorVisible(visible);
         },
         loadFont: function(font) {
-          return screen.loadFont(font);
+          // do nothing - all font files will be loaded at startup or on first use - did not decided yet
+          //return screen.loadFont(font);
         },
         isFontReady: function(font) {
-          return screen.isFontReady(font);
+          return CIsFontReady(font);
+          //return screen.isFontReady(font);
         }
       };
     }

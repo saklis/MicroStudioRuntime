@@ -4,7 +4,7 @@
 
 int main() {
     // Initialization
-    int screenWidth = 1200;
+    int screenWidth = 1368;
     int screenHeight = 720;
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
@@ -12,10 +12,11 @@ int main() {
     SetTargetFPS(60);
     SetExitKey(KEY_NULL);
 
-    // init window
+    // init window by drawing a single frame. Should be replaced with something more cool.
+    // Maybe loading screen with microStudio logo?
     BeginDrawing();
-    ClearBackground(RAYWHITE);
-    DrawText("Welcome to MicroStudio Runtime! Fees not included!", 160, 200, 20, BLACK);
+    ClearBackground(BLACK);
+    DrawText("Welcome to MicroStudio Runtime! Fees not included!", 160, 200, 20, RAYWHITE);
     EndDrawing();
 
     // init runtime
@@ -43,6 +44,7 @@ int main() {
     // Main game loop
     while (!WindowShouldClose()) // Detect window close button or Exit key
     {
+        // update screen size
         screenWidth = GetScreenWidth();
         screenHeight = GetScreenHeight();
         MSRuntime::SetScreenSize(screenWidth, screenHeight);
@@ -50,18 +52,15 @@ int main() {
         // update keyboard
         for (int key = KEY_SPACE; key <= KEY_KB_MENU; key++) {
             if (IsKeyPressed(key)) {
-                // Key 'key' was pressed
                 MSRuntime::UpdateKeyboard(key, true);
             } else if (IsKeyReleased(key)) {
                 MSRuntime::UpdateKeyboard(key, false);
             }
         }
 
-        // Draw
+        // tick MicroStudio
         BeginDrawing();
-
         MSRuntime::Tick();
-
         EndDrawing();
     }
 

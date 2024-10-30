@@ -6,19 +6,23 @@
 
 #include "raylib.h"
 
-class MSAssetsManager
-{
+class MSAssetsManager {
 public:
     inline static const std::string DefaultAssetsPath = "assets/";
-    static bool AssetsExists(const std::string assetsPath);
 
-    bool LoadAssets(const std::string assetsPath, std::string& errorMsg);
+    static bool AssetsExists(const std::string &assetsPath);
 
-    Texture2D* GetSprite(std::string sprite);
+    bool LoadAssets(const std::string &assetsPath, std::string &errorMsg);
+
+    bool UnloadAssets(std::string &errorMsg);
+
+    Texture2D *GetSprite(const std::string &sprite);
+
+    Font *GetFont(const std::string &fontName);
+
 protected:
     std::string _assetsPath;
 
     std::unordered_map<std::string, Texture2D> _sprites;
-
-    bool LoadSprite(std::string& errorMsg);
+    std::unordered_map<std::string, Font> _fonts;
 };
