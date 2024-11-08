@@ -6,6 +6,39 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // JS API BEGIN
 
+// CALLED BY C++
+static void JS_UpdateScreenSize(JSContext* ctx, const float screenWidth, const float screenHeight, const char* aspect, const char* orientation) {
+    // Retrieve the 'update' function
+    JSValue global_obj = JS_GetGlobalObject(ctx);
+    JSValue js_update_func = JS_GetPropertyStr(ctx, global_obj, "CUpdateScreenSize");
+    JS_FreeValue(ctx, global_obj);
+
+    if (JS_IsFunction(ctx, js_update_func)) {
+        JSValue args[4];
+        args[0] = JS_NewFloat64(ctx, screenWidth);
+        args[1] = JS_NewFloat64(ctx, screenHeight);
+        args[2] = JS_NewString(ctx, aspect);
+        args[3] = JS_NewString(ctx, orientation);
+
+        JSValue result = JS_Call(ctx, js_update_func, JS_UNDEFINED, 4, args);
+
+        JS_FreeValue(ctx, args[0]);
+        JS_FreeValue(ctx, args[1]);
+        JS_FreeValue(ctx, args[2]);
+        JS_FreeValue(ctx, args[3]);
+
+        if (JS_IsException(result)) {
+            const JSValue exception = JS_GetException(ctx);
+            const char* error_str = JS_ToCString(ctx, exception);
+            JS_FreeCString(ctx, error_str);
+            JS_FreeValue(ctx, exception);
+        }
+
+        JS_FreeValue(ctx, result);
+    }
+}
+
+// CALLED BY microengine.js
 
 static JSValue JS_Break(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
     const char* text = JS_ToCString(ctx, argv[0]);
@@ -112,13 +145,13 @@ static const JSCFunctionListEntry js_raylib_funcs[11] = {
     JS_CFUNC_DEF("CRuntimeInitialized", 0, JS_RuntimeInitialized),
 
     // screen
-    /* screen.clear() */ JS_CFUNC_DEF("CClear", 1, JS_Clear),
-    /* screen.setColor() */ JS_CFUNC_DEF("CSetColor", 1, JS_SetColor),
-    /* screen.setAlpha() */ JS_CFUNC_DEF("CSetAlpha", 1, JS_SetAlpha),
-    /* screen.setFont() */ JS_CFUNC_DEF("CSetFont", 1, JS_SetFont),
-    /* screen.drawSprite() */ JS_CFUNC_DEF("CDrawSprite", 5, JS_DrawSprite),
-    /* screen.drawText() */ JS_CFUNC_DEF("CDrawText", 5, JS_DrawText),
-    /* screen.isFontReady() */ JS_CFUNC_DEF("CIsFontReady", 1, JS_IsFontReady),
+    JS_CFUNC_DEF("CClear", 1, JS_Clear),
+    JS_CFUNC_DEF("CSetColor", 1, JS_SetColor),
+    JS_CFUNC_DEF("CSetAlpha", 1, JS_SetAlpha),
+    JS_CFUNC_DEF("CSetFont", 1, JS_SetFont),
+    JS_CFUNC_DEF("CDrawSprite", 5, JS_DrawSprite),
+    JS_CFUNC_DEF("CDrawText", 5, JS_DrawText),
+    JS_CFUNC_DEF("CIsFontReady", 1, JS_IsFontReady),
 };
 
 // JS API END

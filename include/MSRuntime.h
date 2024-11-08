@@ -124,6 +124,8 @@ protected:
     void CalculateNativeCoordinates(float x, float y, float w, float h, float* n_x,
                                     float* n_y, float* n_w, float* n_h) const;
 
+    const char* CalculateAspectRatio(MSRuntime_Orientation orientation, int screen_width, int screen_height);
+
     // Asset library
     std::unique_ptr<MSAssetsManager> _assets = std::make_unique<MSAssetsManager>();
 

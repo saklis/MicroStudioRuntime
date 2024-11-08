@@ -1,6 +1,6 @@
 // --- Inline Script Code from index.html ---
-var orientation = 'any';
-var aspect = 'free';
+window.orientation = 'any';
+window.aspect = 'free';
 var ms_libs = [];
 window.skip_service_worker = true;
 window.exported_project = true;
@@ -24,11 +24,13 @@ draw = function()
   //screen.setColor( "rgba(255,0,0,1)" )
   //screen.setAlpha(50)
   
-  screen.drawSprite("icon", x, y, 200, 200)
+  //screen.drawSprite("icon", x, y, 200, 200)
   
   screen.setFont("BitCell")
   if screen.isFontReady("BitCell") then
-    screen.drawText("Font BitCell found!", 0, 0, 50, "#FFFFFF")
+    //screen.drawText("Font BitCell found!", 0, 0, 50, "#FFFFFF")
+    screen.drawText("screen width: " + screen.width, 0, 10, 20, "#FFFFFF")
+    screen.drawText("screen height: " + screen.height, 0, -10, 20, "#FFFFFF")
   end
 end
 end()`;

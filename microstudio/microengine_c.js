@@ -7,9 +7,16 @@ var console = {
   },
 };
 
-// create window variable to simulate browser window
+// create window and document variable to simulate browser window
 var window = {};
 var document = {
+  createElement: function(name) {
+    return {
+      width: 1080,
+      height: 1920,
+      // Add other canvas methods and properties if your code uses them
+    };
+  },
   listeners: {},
   addEventListener: function (type, callback) {
     if (!this.listeners[type]) {
@@ -32,6 +39,16 @@ requestAnimationFrame = function(callback) {
 CGameTick = function()
 {
   globalThis.runtime.timer();
+}
+
+CUpdateScreenSize = function(width, height, aspect, orientation)
+{
+  window.innerWidth = width;
+  window.innerHeight = height;
+  globalThis.runtime.screen.width = width;
+  globalThis.runtime.screen.height = height;
+  globalThis.runtime.aspect = aspect;
+  globalThis.runtime.orientation = orientation;
 }
 
 // CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
@@ -680,8 +697,8 @@ CGameTick = function()
       // this.mouse = this.screen.mouse;
       this.previous_init = null;
       // this.random = new Random(0);
-      // this.orientation = window.orientation;
-      // this.aspect = window.aspect;
+      this.orientation = window.orientation;
+      this.aspect = window.aspect;
       this.report_errors = true;
       this.log = (text) => {
         return this.listener.log(text);
@@ -1150,6 +1167,7 @@ CGameTick = function()
     }
   
     timer() {
+      //CBreak("screen width: " + this.screen.width + " height: " + this.screen.height);
       var ds, dt, fps, i, j, ref, time, update_rate;
       if (this.stopped) {
         return;
@@ -1231,8 +1249,9 @@ CGameTick = function()
     drawCall() {
       var err;
       try {
-        // this.screen.initDraw();
-        // this.screen.updateInterface();
+        //this.screen.initDraw();
+        this.screen.updateInterface();
+        this.screen.resize();
         this.vm.call("draw");
         this.reportWarnings();
         if (this.vm.error_info != null) {
@@ -2703,9 +2722,9 @@ CGameTick = function()
   this.Screen = class Screen {
     constructor(runtime) {
       this.runtime = runtime;
-      // this.canvas = document.createElement("canvas");
-      // this.canvas.width = 1080;
-      // this.canvas.height = 1920;
+      this.canvas = document.createElement("canvas");
+      this.canvas.width = 1080;
+      this.canvas.height = 1920;
       this.touches = {};
       this.mouse = {
         x: -10000,
@@ -3671,11 +3690,11 @@ CGameTick = function()
         w = cw;
         h = ch;
       }
-      this.canvas.style["margin-top"] = Math.round((ch - h) / 2) + "px";
-      this.canvas.style.width = Math.round(w) + "px";
-      this.canvas.style.height = Math.round(h) + "px";
-      devicePixelRatio = window.devicePixelRatio || 1;
-      backingStoreRatio = this.context.webkitBackingStorePixelRatio || this.context.mozBackingStorePixelRatio || this.context.msBackingStorePixelRatio || this.context.oBackingStorePixelRatio || this.context.backingStorePixelRatio || 1;
+      // this.canvas.style["margin-top"] = Math.round((ch - h) / 2) + "px";
+      // this.canvas.style.width = Math.round(w) + "px";
+      // this.canvas.style.height = Math.round(h) + "px";
+      devicePixelRatio = 1; // window.devicePixelRatio || 1;
+      backingStoreRatio = 1; // this.context.webkitBackingStorePixelRatio || this.context.mozBackingStorePixelRatio || this.context.msBackingStorePixelRatio || this.context.oBackingStorePixelRatio || this.context.backingStorePixelRatio || 1;
       this.ratio = devicePixelRatio / backingStoreRatio * Math.max(1, Math.min(2, this.supersampling));
       this.width = w * this.ratio;
       this.height = h * this.ratio;
@@ -3683,7 +3702,7 @@ CGameTick = function()
       this.canvas.height = this.height;
       return this.initContext();
     }
-  
+
     startControl(element) {
       var backingStoreRatio, devicePixelRatio;
       this.element = element;

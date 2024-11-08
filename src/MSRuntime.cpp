@@ -73,16 +73,30 @@ void MSRuntime::SetScreenSize(const int screenWidth, const int screenHeight) {
     instance->_screenHeight = screenHeight;
     instance->_screenHeightHalf = screenHeight / 2;
 
+    const char* aspect = nullptr;
+    const char* orientation = nullptr;
+
     if (screenWidth >= screenHeight) {
         instance->_orientation = LANDSCAPE;
+        orientation = "landscape";
         instance->_screenHeightRatio = static_cast<float>(screenHeight) / 200.0f; // in LANDSCAPE y is <-100,100>
         instance->_screenWidthRatio = static_cast<float>(screenWidth) / (
                                           static_cast<float>(screenWidth) / static_cast<float>(screenHeight) * 200.0f);
+        aspect = instance->CalculateAspectRatio(instance->_orientation, screenWidth, screenHeight);
+
+        JS_UpdateScreenSize(instance->_context, static_cast<float>(screenWidth) / instance->_screenWidthRatio, 200.0f,
+                            aspect, orientation);
     } else {
         instance->_orientation = PORTRAIT;
+        orientation = "portrait";
         instance->_screenHeightRatio = static_cast<float>(screenHeight) / (
                                            static_cast<float>(screenHeight) / static_cast<float>(screenWidth) * 200.0f);
         instance->_screenWidthRatio = static_cast<float>(screenWidth) / 200.0f; // in PORTRAIT x is <-100,100>
+
+        aspect = instance->CalculateAspectRatio(instance->_orientation, screenWidth, screenHeight);
+
+        JS_UpdateScreenSize(instance->_context, 200.0f, static_cast<float>(screenHeight) / instance->_screenHeightRatio,
+                            aspect, orientation);
     }
 }
 
@@ -146,7 +160,8 @@ void MSRuntime::Screen_DrawSprite(const char* sprite, const float x, const float
                    0, tint);
 }
 
-void MSRuntime::Screen_DrawText(const char* text, float x, float y, float size, const char* colorText) {
+void MSRuntime::Screen_DrawText(const char* text, const float x, const float y, const float size,
+                                const char* colorText) {
     MSRuntime* instance = MSRuntime::GetInstance();
 
     Color color;
@@ -194,6 +209,37 @@ void MSRuntime::CalculateNativeCoordinates(const float x, const float y, const f
     *n_y = -y * _screenHeightRatio + static_cast<float>(_screenHeightHalf);
     *n_w = w * _screenWidthRatio;
     *n_h = h * _screenHeightRatio;
+}
+
+const char *MSRuntime::CalculateAspectRatio(const MSRuntime_Orientation orientation, const int screen_width,
+                                            const int screen_height) {
+    float aspect = 0.0f;
+
+    if (orientation == LANDSCAPE) {
+        aspect = static_cast<float>(screen_width) / static_cast<float>(screen_height);
+
+        if (aspect > 1.95f) {
+            return "2x1";
+        } else if (aspect > 1.6f) {
+            return "16x9";
+        } else if (aspect > 1.2f) {
+            return "4x3";
+        } else if (aspect > 0.9f) {
+            return "1x1";
+        }
+    } else {
+        aspect = static_cast<float>(screen_height) / static_cast<float>(screen_width);
+
+        if (aspect > 1.95f) {
+            return "2x1";
+        } else if (aspect > 1.6f) {
+            return "16x9";
+        } else if (aspect > 1.2f) {
+            return "4x3";
+        } else if (aspect > 0.9f) {
+            return "1x1";
+        }
+    }
 }
 
 void MSRuntime::RuntimeInitialized() {
