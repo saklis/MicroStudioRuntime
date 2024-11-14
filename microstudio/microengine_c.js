@@ -6485,7 +6485,7 @@ CUpdateScreenSize = function(width, height, aspect, orientation)
     }
   
     postMessage(data) {
-      console.info("sending: " + JSON.stringify(data));
+      //console.info("sending: " + JSON.stringify(data));
       // var err;
       // if (window !== window.parent) {
       //   window.parent.postMessage(JSON.stringify(data), "*");

@@ -10,7 +10,7 @@
 
 #include "helpers.h"
 
-MSRuntime_ReturnValue MSRuntime::Init(std::string &errorMsg) {
+MSRuntime_ReturnValue MSRuntime::Init(std::string& errorMsg) {
     MSRuntime* instance = MSRuntime::GetInstance();
 
     instance->_runtime = JS_NewRuntime();
@@ -34,9 +34,16 @@ MSRuntime_ReturnValue MSRuntime::Init(std::string &errorMsg) {
     return OK;
 }
 
-MSRuntime_ReturnValue MSRuntime::LoadAssets(std::string &errorMsg) {
+MSRuntime_ReturnValue MSRuntime::LoadAssets(std::string& errorMsg) {
     if (MSAssetsManager::AssetsExists(MSAssetsManager::DefaultAssetsPath)) {
         MSRuntime* instance = MSRuntime::GetInstance();
+
+        // read resource manifest from JS
+        if (!instance->_assets->ReadResourceManifest(instance->_context, errorMsg)) {
+            return ErrorWhileReadingResourceManifest;
+        }
+
+        // load assets
         if (instance->_assets->LoadAssets(MSAssetsManager::DefaultAssetsPath, errorMsg)) {
             return OK;
         } else {
@@ -47,12 +54,30 @@ MSRuntime_ReturnValue MSRuntime::LoadAssets(std::string &errorMsg) {
     return OK;
 }
 
-MSRuntime_ReturnValue MSRuntime::LoadGameSource(std::string &errorMsg) {
+MSRuntime_ReturnValue MSRuntime::LoadGameSource(std::string& errorMsg) {
     MSRuntime* instance = MSRuntime::GetInstance();
     return instance->RegisterGameSource(errorMsg);
 }
 
-MSRuntime_ReturnValue MSRuntime::Free(std::string &errorMsg) {
+MSRuntime_ReturnValue MSRuntime::StartGame(std::string& errorMsg) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+    const char* script = "window.player = new Player();";
+    JSValue result = JS_Eval(instance->_context, script, strlen(script), "<input>", JS_EVAL_TYPE_GLOBAL);
+    if (JS_IsException(result)) {
+        JSValue exception = JS_GetException(instance->_context);
+        const char* ex_msg = JS_ToCString(instance->_context, exception);
+        errorMsg = ex_msg;
+        JS_FreeCString(instance->_context, ex_msg);
+
+        JS_FreeValue(instance->_context, exception);
+        JS_FreeValue(instance->_context, result);
+        return ErrorWhileStartingGame;
+    }
+    JS_FreeValue(instance->_context, result);
+    return OK;
+}
+
+MSRuntime_ReturnValue MSRuntime::Free(std::string& errorMsg) {
     MSRuntime* instance = MSRuntime::GetInstance();
 
     if (!instance->_assets->UnloadAssets(errorMsg)) {
@@ -141,8 +166,8 @@ void MSRuntime::Screen_SetFont(const char* font) {
 void MSRuntime::Screen_DrawSprite(const char* sprite, const float x, const float y, const float w, const float h) {
     const MSRuntime* instance = MSRuntime::GetInstance();
 
-    const Texture2D* texture = instance->_assets->GetSprite(sprite);
-    if (!texture) return; // if the sprite doesn't exist, return
+    const MSSprite* ms_sprite = instance->_assets->GetSprite(sprite);
+    if (!ms_sprite) return; // if the sprite doesn't exist, return
 
     float nX, nY, nW, nH;
     instance->CalculateNativeCoordinates(x, y, w, h, &nX, &nY, &nW, &nH);
@@ -150,14 +175,21 @@ void MSRuntime::Screen_DrawSprite(const char* sprite, const float x, const float
     Color tint = instance->_currentColor;
     tint.a = instance->_currentAlpha;
 
-    DrawTexturePro(*texture,
-                   {0, 0, static_cast<float>(texture->width), static_cast<float>(texture->height)},
-                   {
-                       nX, nY,
-                       nW, nH,
-                   },
-                   {nW / 2, nH / 2},
-                   0, tint);
+    Rectangle sourceRec = {0, 0, static_cast<float>(ms_sprite->Texture.width),
+                           static_cast<float>(ms_sprite->Texture.height)};
+    if (ms_sprite->IsAnimation == true) {
+        sourceRec.y = static_cast<float>(ms_sprite->CurrentFrame) * static_cast<float>(ms_sprite->FrameHeight);
+        sourceRec.height = static_cast<float>(ms_sprite->FrameHeight);
+    }
+
+    DrawTexturePro(ms_sprite->Texture,
+                       sourceRec,
+                       {
+                           nX, nY,
+                           nW, nH,
+                       },
+                       {nW / 2, nH / 2},
+                       0, tint);
 }
 
 void MSRuntime::Screen_DrawText(const char* text, const float x, const float y, const float size,
@@ -211,7 +243,7 @@ void MSRuntime::CalculateNativeCoordinates(const float x, const float y, const f
     *n_h = h * _screenHeightRatio;
 }
 
-const char *MSRuntime::CalculateAspectRatio(const MSRuntime_Orientation orientation, const int screen_width,
+const char* MSRuntime::CalculateAspectRatio(const MSRuntime_Orientation orientation, const int screen_width,
                                             const int screen_height) {
     float aspect = 0.0f;
 
@@ -240,6 +272,8 @@ const char *MSRuntime::CalculateAspectRatio(const MSRuntime_Orientation orientat
             return "1x1";
         }
     }
+
+    return "16x9"; // fallback to most common aspect ratio
 }
 
 void MSRuntime::RuntimeInitialized() {
@@ -250,7 +284,7 @@ void MSRuntime::UpdateKeyboard(const int keyCode, const bool isDown) {
     MSRuntime* instance = MSRuntime::GetInstance();
     if (instance->_isRuntimeInitialized == false) return;
 
-    auto &[code, key] = Ray2MicroKeyMap[keyCode];
+    auto& [code, key] = Ray2MicroKeyMap[keyCode];
 
     // Create the event object
     const JSValue event = JS_NewObject(instance->_context);
@@ -279,31 +313,44 @@ void MSRuntime::UpdateKeyboard(const int keyCode, const bool isDown) {
     JS_FreeValue(instance->_context, event);
 }
 
-void MSRuntime::Tick() {
+MSRuntime_ReturnValue MSRuntime::Tick(const float deltaTime, std::string& errorMsg) {
     MSRuntime* instance = MSRuntime::GetInstance();
-    if (instance->_isRuntimeInitialized == false) return;
+    if (instance->_isRuntimeInitialized == false) return OK; // skip tick if runtime is not initialized
+
+    // update assets to modify animation's current frame
+    instance->_assets->Update(deltaTime);
 
     // Retrieve the 'update' function
     JSValue global_obj = JS_GetGlobalObject(instance->_context);
     JSValue js_update_func = JS_GetPropertyStr(instance->_context, global_obj, "CGameTick");
-    JS_FreeValue(instance->_context, global_obj);
 
     if (JS_IsFunction(instance->_context, js_update_func)) {
         JSValue result = JS_Call(instance->_context, js_update_func, JS_UNDEFINED, 0, nullptr);
 
         if (JS_IsException(result)) {
             const JSValue exception = JS_GetException(instance->_context);
-            const char* error_str = JS_ToCString(instance->_context, exception);
-            JS_FreeCString(instance->_context, error_str);
+            const char* ex_msg = JS_ToCString(instance->_context, exception);
+            errorMsg = ex_msg;
+            JS_FreeCString(instance->_context, ex_msg);
             JS_FreeValue(instance->_context, exception);
+
+            JS_FreeValue(instance->_context, result);
+            JS_FreeValue(instance->_context, js_update_func);
+            JS_FreeValue(instance->_context, global_obj);
+            return ErrorWhileCallingGameTick;
         }
         JS_FreeValue(instance->_context, result);
     }
+
+    JS_FreeValue(instance->_context, js_update_func);
+    JS_FreeValue(instance->_context, global_obj);
+
+    return OK;
 }
 
-MSRuntime_ReturnValue MSRuntime::RegisterMicroStudioLibraries(std::string &errorMsg) const {
+MSRuntime_ReturnValue MSRuntime::RegisterMicroStudioLibraries(std::string& errorMsg) const {
     MSRuntime_ReturnValue retVal = OK;
-    for (const auto &library: this->MicroStudioLibraries) {
+    for (const auto& library: this->MicroStudioLibraries) {
         retVal = this->RegisterJSFileInQuickJS(library.c_str(), errorMsg);
         if (retVal != OK) return retVal;
     }
@@ -311,15 +358,17 @@ MSRuntime_ReturnValue MSRuntime::RegisterMicroStudioLibraries(std::string &error
     return retVal;
 }
 
-MSRuntime_ReturnValue MSRuntime::RegisterJSAPIFunctions(std::string &errorMsg) const {
+MSRuntime_ReturnValue MSRuntime::RegisterJSAPIFunctions(std::string& errorMsg) const {
     JSValue global_obj = JS_GetGlobalObject(this->_context);
     JS_SetPropertyFunctionList(this->_context, global_obj, js_raylib_funcs,
                                sizeof(js_raylib_funcs) / sizeof(JSCFunctionListEntry));
-    const JSValue exception = JS_GetException(this->_context);
+    JSValue exception = JS_GetException(this->_context);
 
-    if (JS_IsUndefined(exception)) {
-        errorMsg = JS_ToCString(this->_context, exception);
-        JS_FreeCString(this->_context, errorMsg.c_str());
+    if (!JS_IsNull(exception)) {
+        const char* ex_msg = JS_ToCString(this->_context, exception);
+        errorMsg = ex_msg;
+        JS_FreeCString(this->_context, ex_msg);
+
         JS_FreeValue(this->_context, exception);
         JS_FreeValue(this->_context, global_obj);
         return ErrorWhileRegisteringJSFunctions;
@@ -331,9 +380,9 @@ MSRuntime_ReturnValue MSRuntime::RegisterJSAPIFunctions(std::string &errorMsg) c
     return OK;
 }
 
-MSRuntime_ReturnValue MSRuntime::RegisterGameSource(std::string &errorMsg) const {
+MSRuntime_ReturnValue MSRuntime::RegisterGameSource(std::string& errorMsg) const {
     MSRuntime_ReturnValue retVal = OK;
-    for (const auto &sourceFile: this->GameSourceFiles) {
+    for (const auto& sourceFile: this->GameSourceFiles) {
         retVal = this->RegisterJSFileInQuickJS(sourceFile.c_str(), errorMsg);
         if (retVal != OK) return retVal;
     }
@@ -341,7 +390,7 @@ MSRuntime_ReturnValue MSRuntime::RegisterGameSource(std::string &errorMsg) const
     return retVal;
 }
 
-MSRuntime_ReturnValue MSRuntime::RegisterJSFileInQuickJS(const char* filePath, std::string &errorMsg) const {
+MSRuntime_ReturnValue MSRuntime::RegisterJSFileInQuickJS(const char* filePath, std::string& errorMsg) const {
     FILE* libFile = fopen(filePath, "rb");
     // check if file exists
     if (libFile == nullptr) {
@@ -363,15 +412,19 @@ MSRuntime_ReturnValue MSRuntime::RegisterJSFileInQuickJS(const char* filePath, s
     fclose(libFile);
 
     // register library in context
-    if (const JSValue result = JS_Eval(this->_context, fileContent, fileSize, filePath, JS_EVAL_TYPE_GLOBAL);
-        JS_IsException(result)) {
+    const JSValue result = JS_Eval(this->_context, fileContent, fileSize, filePath, JS_EVAL_TYPE_GLOBAL);
+    if (JS_IsException(result)) {
         const JSValue exception = JS_GetException(this->_context);
-        errorMsg = JS_ToCString(this->_context, exception);
+        const char* ex_msg = JS_ToCString(this->_context, exception);
+        errorMsg = ex_msg;
+        JS_FreeCString(this->_context, ex_msg);
 
-        JS_FreeCString(this->_context, errorMsg.c_str());
         JS_FreeValue(this->_context, exception);
-        return ErrorEvaluathingJSFile;
+        JS_FreeValue(this->_context, result);
+        return ErrorEvaluatingJSFile;
     }
+
+    JS_FreeValue(this->_context, result);
 
     return OK;
 }

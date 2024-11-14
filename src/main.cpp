@@ -21,27 +21,35 @@ int main() {
 
     // init runtime
     std::string errorMsg;
-    MSRuntime_ReturnValue MSRuntimeInitStatus = MSRuntime::Init(errorMsg);
-    if (MSRuntimeInitStatus != OK) {
-        CloseWindow();
-        return 1;
-    }
-
-    // Load assets - must be done after InitWindow()!
-    MSRuntime_ReturnValue MSRuntimeLoadAssetsStatus = MSRuntime::LoadAssets(errorMsg);
-    if (MSRuntimeLoadAssetsStatus != OK) {
+    MSRuntime_ReturnValue initStatus = MSRuntime::Init(errorMsg);
+    if (initStatus != OK) {
         CloseWindow();
         return 1;
     }
 
     // Load game source
-    MSRuntime_ReturnValue MSRuntimeLoadGameSourceStatus = MSRuntime::LoadGameSource(errorMsg);
-    if (MSRuntimeLoadGameSourceStatus != OK) {
+    MSRuntime_ReturnValue loadGameSourceStatus = MSRuntime::LoadGameSource(errorMsg);
+    if (loadGameSourceStatus != OK) {
+        CloseWindow();
+        return 1;
+    }
+
+    // Load assets - must be done after InitWindow()!
+    MSRuntime_ReturnValue loadAssetsStatus = MSRuntime::LoadAssets(errorMsg);
+    if (loadAssetsStatus != OK) {
+        CloseWindow();
+        return 1;
+    }
+
+    // Start the game - creates Player object in JS context
+    MSRuntime_ReturnValue startGameStatus = MSRuntime::StartGame(errorMsg);
+    if (startGameStatus != OK) {
         CloseWindow();
         return 1;
     }
 
     // Main game loop
+    MSRuntime_ReturnValue tickStatus = OK;
     while (!WindowShouldClose()) // Detect window close button or Exit key
     {
         // update screen size
@@ -60,8 +68,12 @@ int main() {
 
         // tick MicroStudio
         BeginDrawing();
-        MSRuntime::Tick();
+        tickStatus = MSRuntime::Tick(GetFrameTime(), errorMsg);
         EndDrawing();
+
+        if (tickStatus != OK) {
+            break;
+        }
     }
 
     MSRuntime_ReturnValue MSRuntimeFreeStatus = MSRuntime::Free(errorMsg);

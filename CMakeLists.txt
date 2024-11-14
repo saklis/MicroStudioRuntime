@@ -11,6 +11,7 @@ set(HEADER_FILES
         "${PROJECT_SOURCE_DIR}/include/helpers.h"
         "${PROJECT_SOURCE_DIR}/include/JS_API.h"
         "${PROJECT_SOURCE_DIR}/include/MSRuntime.h"
+        "${PROJECT_SOURCE_DIR}/include/MSSprite.h"
 )
 
 set(SOURCE_FILES

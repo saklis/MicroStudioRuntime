@@ -15,10 +15,13 @@ enum MSRuntime_ReturnValue {
     OK = 0,
     ErrorWhileInitializingQuickJS = 1,
     MSLibraryFileDoesntExist = 3,
-    ErrorEvaluathingJSFile = 4,
+    ErrorEvaluatingJSFile = 4,
     ErrorWhileRegisteringJSFunctions = 5,
-    ErrorWhileLoadingAssets = 6,
-    ErrorWhileUnloadingAssets = 7
+    ErrorWhileReadingResourceManifest = 6,
+    ErrorWhileLoadingAssets = 7,
+    ErrorWhileUnloadingAssets = 8,
+    ErrorWhileStartingGame = 9,
+    ErrorWhileCallingGameTick = 10
 };
 
 enum MSRuntime_Orientation {
@@ -46,13 +49,15 @@ public:
     };
 
     // Initialize the runtime
-    static MSRuntime_ReturnValue Init(std::string &errorMsg);
+    static MSRuntime_ReturnValue Init(std::string& errorMsg);
 
-    static MSRuntime_ReturnValue LoadAssets(std::string &errorMsg);
+    static MSRuntime_ReturnValue LoadAssets(std::string& errorMsg);
 
-    static MSRuntime_ReturnValue LoadGameSource(std::string &errorMsg);
+    static MSRuntime_ReturnValue LoadGameSource(std::string& errorMsg);
 
-    static MSRuntime_ReturnValue Free(std::string &errorMsg);
+    static MSRuntime_ReturnValue StartGame(std::string& string);
+
+    static MSRuntime_ReturnValue Free(std::string& errorMsg);
 
     // Set the screen size and orientation
     static void SetScreenSize(int screenWidth, int screenHeight);
@@ -64,7 +69,7 @@ public:
     static void UpdateKeyboard(int keyCode, bool isDown);
 
     // Called every frame
-    static void Tick();
+    static MSRuntime_ReturnValue Tick(float deltaTime, std::string& errorMsg);
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // MICROSTUDIO API
@@ -124,25 +129,25 @@ protected:
     void CalculateNativeCoordinates(float x, float y, float w, float h, float* n_x,
                                     float* n_y, float* n_w, float* n_h) const;
 
-    const char* CalculateAspectRatio(MSRuntime_Orientation orientation, int screen_width, int screen_height);
+    const char *CalculateAspectRatio(MSRuntime_Orientation orientation, int screen_width, int screen_height);
 
     // Asset library
     std::unique_ptr<MSAssetsManager> _assets = std::make_unique<MSAssetsManager>();
 
     // Functions for registering JS files
-    MSRuntime_ReturnValue RegisterMicroStudioLibraries(std::string &errorMsg) const;
+    MSRuntime_ReturnValue RegisterMicroStudioLibraries(std::string& errorMsg) const;
 
-    MSRuntime_ReturnValue RegisterJSAPIFunctions(std::string &errorMsg) const;
+    MSRuntime_ReturnValue RegisterJSAPIFunctions(std::string& errorMsg) const;
 
-    MSRuntime_ReturnValue RegisterGameSource(std::string &errorMsg) const;
+    MSRuntime_ReturnValue RegisterGameSource(std::string& errorMsg) const;
 
-    MSRuntime_ReturnValue RegisterJSFileInQuickJS(const char* filePath, std::string &errorMsg) const;
+    MSRuntime_ReturnValue RegisterJSFileInQuickJS(const char* filePath, std::string& errorMsg) const;
 
     // private constructor
     MSRuntime() = default;
 
     // Delete copy constructor and assignment operator
-    MSRuntime(const MSRuntime &) = delete;
+    MSRuntime(const MSRuntime&) = delete;
 
-    MSRuntime &operator=(const MSRuntime &) = delete;
+    MSRuntime& operator=(const MSRuntime&) = delete;
 };
