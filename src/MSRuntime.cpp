@@ -175,21 +175,40 @@ void MSRuntime::Screen_DrawSprite(const char* sprite, const float x, const float
     Color tint = instance->_currentColor;
     tint.a = instance->_currentAlpha;
 
-    Rectangle sourceRec = {0, 0, static_cast<float>(ms_sprite->Texture.width),
-                           static_cast<float>(ms_sprite->Texture.height)};
+    Rectangle sourceRec = {
+        0, 0, static_cast<float>(ms_sprite->Texture.width),
+        static_cast<float>(ms_sprite->Texture.height)
+    };
     if (ms_sprite->IsAnimation == true) {
         sourceRec.y = static_cast<float>(ms_sprite->CurrentFrame) * static_cast<float>(ms_sprite->FrameHeight);
         sourceRec.height = static_cast<float>(ms_sprite->FrameHeight);
     }
 
     DrawTexturePro(ms_sprite->Texture,
-                       sourceRec,
-                       {
-                           nX, nY,
-                           nW, nH,
-                       },
-                       {nW / 2, nH / 2},
-                       0, tint);
+                   sourceRec,
+                   {nX, nY, nW, nH},
+                   {nW / 2, nH / 2},
+                   0, tint);
+}
+
+void MSRuntime::Screen_DrawSpritePart(const char* sprite, const float px, const float py, const float pw,
+                                      const float ph, const float x, const float y, const float w, const float h) {
+    const MSRuntime* instance = MSRuntime::GetInstance();
+
+    const MSSprite* ms_sprite = instance->_assets->GetSprite(sprite);
+    if (!ms_sprite) return; // if the sprite doesn't exist, return
+
+    float nX, nY, nW, nH;
+    instance->CalculateNativeCoordinates(x, y, w, h, &nX, &nY, &nW, &nH);
+
+    Color tint = instance->_currentColor;
+    tint.a = instance->_currentAlpha;
+
+    DrawTexturePro(ms_sprite->Texture,
+                   {px, py, pw, ph},
+                   {nX, nY, nW, nH},
+                   {nW / 2, nH / 2},
+                   0, tint);
 }
 
 void MSRuntime::Screen_DrawText(const char* text, const float x, const float y, const float size,

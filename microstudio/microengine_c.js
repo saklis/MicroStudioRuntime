@@ -2907,7 +2907,8 @@ CUpdateScreenSize = function(width, height, aspect, orientation)
           return screen.drawSprite(sprite, x, y, w, h);
         },
         drawSpritePart: function(sprite, sx, sy, sw, sh, x, y, w, h) {
-          return screen.drawSpritePart(sprite, sx, sy, sw, sh, x, y, w, h);
+          CDrawSpritePart(sprite, sx, sy, sw, sh, x, y, w, h);
+          //return screen.drawSpritePart(sprite, sx, sy, sw, sh, x, y, w, h);
         },
         drawImagePart: function(sprite, sx, sy, sw, sh, x, y, w, h) {
           return screen.drawSpritePart(sprite, sx, sy, sw, sh, x, y, w, h);

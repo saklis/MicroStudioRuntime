@@ -6,14 +6,17 @@ window.skip_service_worker = true;
 window.exported_project = true;
 window.ms_use_server = false;
 var resources = {
-    "images":[
-        {"file":"animicon.png","version":8,"size":1133,"properties":{"frames":4,"fps":5}},
-        {"file":"icon.png","version":0,"size":0,"properties":{}}
-    ],
-    "assets":[],
-    "maps":{},
-    "sounds":[],
-    "music":[]
+    "images": [{
+        "file": "animicon.png",
+        "version": 8,
+        "size": 1133,
+        "properties": {"frames": 4, "fps": 5}
+    }, {"file": "icon.png", "version": 0, "size": 0, "properties": {}}, {
+        "file": "manyicon.png",
+        "version": 18,
+        "size": 521,
+        "properties": {"frames": 1, "fps": 5}
+    }], "assets": [], "maps": {}, "sounds": [], "music": []
 };
 
 globalThis.microScriptCode = `function()
@@ -34,7 +37,8 @@ draw = function()
   //screen.setColor( "rgba(255,0,0,1)" )
   //screen.setAlpha(50)
   
-  screen.drawSprite("animicon", x, y, 200, 200)
+  //screen.drawSprite("animicon", x, y, 200, 200)
+  screen.drawSpritePart("manyicon", 16, 16, 32, 32, x, y, 200)
   
   screen.setFont("BitCell")
   if screen.isFontReady("BitCell") then

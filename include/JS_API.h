@@ -7,7 +7,8 @@
 // JS API BEGIN
 
 // CALLED BY C++
-static void JS_UpdateScreenSize(JSContext* ctx, const float screenWidth, const float screenHeight, const char* aspect, const char* orientation) {
+static void JS_UpdateScreenSize(JSContext* ctx, const float screenWidth, const float screenHeight, const char* aspect,
+                                const char* orientation) {
     // Retrieve the 'update' function
     JSValue global_obj = JS_GetGlobalObject(ctx);
     JSValue js_update_func = JS_GetPropertyStr(ctx, global_obj, "CUpdateScreenSize");
@@ -86,10 +87,39 @@ static JSValue JS_DrawSprite(JSContext* ctx, JSValueConst this_val, int argc, JS
     JS_ToFloat64(ctx, &x, argv[1]);
     JS_ToFloat64(ctx, &y, argv[2]);
     JS_ToFloat64(ctx, &w, argv[3]);
-    JS_ToFloat64(ctx, &h, argv[4]);
+    if (!JS_IsUndefined(argv[4])) {
+        JS_ToFloat64(ctx, &h, argv[4]);
+    } else {
+        h = w; // microScript allow for height to be unset, in that case we use width
+    }
 
     MSRuntime::Screen_DrawSprite(sprite, static_cast<float>(x), static_cast<float>(y), static_cast<float>(w),
                                  static_cast<float>(h));
+
+    JS_FreeCString(ctx, sprite);
+    return JS_UNDEFINED;
+}
+
+static JSValue JS_DrawSpritePart(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
+    const char* sprite = JS_ToCString(ctx, argv[0]);
+    double px = 0.0f, py = 0.0f, pw = 0.0f, ph = 0.0f, x = 0.0f, y = 0.0f, w = 0.0f, h = 0.0f;
+    JS_ToFloat64(ctx, &px, argv[1]);
+    JS_ToFloat64(ctx, &py, argv[2]);
+    JS_ToFloat64(ctx, &pw, argv[3]);
+    JS_ToFloat64(ctx, &ph, argv[4]);
+    JS_ToFloat64(ctx, &x, argv[5]);
+    JS_ToFloat64(ctx, &y, argv[6]);
+    JS_ToFloat64(ctx, &w, argv[7]);
+    if (!JS_IsUndefined(argv[8])) {
+        JS_ToFloat64(ctx, &h, argv[8]);
+    } else {
+        h = w; // microScript allow for height to be unset, in that case we use width
+    }
+
+    MSRuntime::Screen_DrawSpritePart(sprite, static_cast<float>(px), static_cast<float>(py), static_cast<float>(pw),
+                                     static_cast<float>(ph),
+                                     static_cast<float>(x), static_cast<float>(y), static_cast<float>(w),
+                                     static_cast<float>(h));
 
     JS_FreeCString(ctx, sprite);
     return JS_UNDEFINED;
@@ -137,7 +167,7 @@ static JSValue JS_RuntimeInitialized(JSContext* ctx, JSValueConst this_val, int 
     return JS_UNDEFINED;
 }
 
-static const JSCFunctionListEntry js_raylib_funcs[11] = {
+static const JSCFunctionListEntry js_raylib_funcs[12] = {
     JS_CFUNC_DEF("CBreak", 1, JS_Break),
     JS_CFUNC_DEF("CConsoleInfo", 1, JS_ConsoleInfo),
     JS_CFUNC_DEF("CConsoleError", 1, JS_ConsoleError),
@@ -150,6 +180,7 @@ static const JSCFunctionListEntry js_raylib_funcs[11] = {
     JS_CFUNC_DEF("CSetAlpha", 1, JS_SetAlpha),
     JS_CFUNC_DEF("CSetFont", 1, JS_SetFont),
     JS_CFUNC_DEF("CDrawSprite", 5, JS_DrawSprite),
+    JS_CFUNC_DEF("CDrawSpritePart", 9, JS_DrawSpritePart),
     JS_CFUNC_DEF("CDrawText", 5, JS_DrawText),
     JS_CFUNC_DEF("CIsFontReady", 1, JS_IsFontReady),
 };

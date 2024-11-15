@@ -85,6 +85,9 @@ public:
 
     static void Screen_DrawSprite(const char* sprite, float x, float y, float w, float h);
 
+    static void Screen_DrawSpritePart(const char* sprite, float px, float py, float pw, float ph,
+                                     float x, float y, float w, float h);
+
     static void Screen_DrawText(const char* text, float x, float y, float size, const char* colorText);
 
     static bool Screen_IsFontReady(const char* font_name);
