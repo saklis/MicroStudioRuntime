@@ -37,8 +37,8 @@ draw = function()
   //screen.setColor( "rgba(255,0,0,1)" )
   //screen.setAlpha(50)
   
-  //screen.drawSprite("animicon", x, y, 200, 200)
-  screen.drawSpritePart("manyicon", 16, 16, 32, 32, x, y, 200)
+  screen.drawSprite("animicon.2", x, y, 200, 200)
+  //screen.drawSpritePart("manyicon", 16, 16, 32, 32, x, y, 200)
   
   screen.setFont("BitCell")
   if screen.isFontReady("BitCell") then

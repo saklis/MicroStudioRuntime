@@ -166,7 +166,21 @@ void MSRuntime::Screen_SetFont(const char* font) {
 void MSRuntime::Screen_DrawSprite(const char* sprite, const float x, const float y, const float w, const float h) {
     const MSRuntime* instance = MSRuntime::GetInstance();
 
-    const MSSprite* ms_sprite = instance->_assets->GetSprite(sprite);
+    // 'sprite' string may include '.' that separates sprite's name and frame number
+    const char* dotPosition = strrchr(sprite, '.');
+    char spriteName[strlen(sprite)];
+    int frameOverride = -1;
+    if (dotPosition) {
+        frameOverride = std::stoi(dotPosition + 1);
+
+        size_t spriteNameLength = dotPosition - sprite;
+        strncpy(spriteName, sprite, spriteNameLength);
+        spriteName[spriteNameLength] = '\0';
+    }else {
+        strncpy(spriteName, sprite, strlen(sprite));
+    }
+
+    const MSSprite* ms_sprite = instance->_assets->GetSprite(spriteName);
     if (!ms_sprite) return; // if the sprite doesn't exist, return
 
     float nX, nY, nW, nH;
@@ -180,7 +194,8 @@ void MSRuntime::Screen_DrawSprite(const char* sprite, const float x, const float
         static_cast<float>(ms_sprite->Texture.height)
     };
     if (ms_sprite->IsAnimation == true) {
-        sourceRec.y = static_cast<float>(ms_sprite->CurrentFrame) * static_cast<float>(ms_sprite->FrameHeight);
+        const int frameNumber = frameOverride >= 0 ? frameOverride : ms_sprite->CurrentFrame;
+        sourceRec.y = static_cast<float>(frameNumber) * static_cast<float>(ms_sprite->FrameHeight);
         sourceRec.height = static_cast<float>(ms_sprite->FrameHeight);
     }
 
