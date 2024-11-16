@@ -163,6 +163,38 @@ void MSRuntime::Screen_SetFont(const char* font) {
     instance->_currentFont = font;
 }
 
+void MSRuntime::Screen_SetDrawRotation(float rotation) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+    instance->_currentDrawRotation = -rotation; // negative rotation because microStudio uses anticlockwise rotation
+}
+
+void MSRuntime::Screen_SetDrawScale(const float scaleX, const float scaleY) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+    instance->_currentDrawScale.x = scaleX;
+    instance->_currentDrawScale.y = scaleY;
+}
+
+void MSRuntime::Screen_FillRect(float x, float y, float w, float h, const char* colorText) {
+    const MSRuntime* instance = MSRuntime::GetInstance();
+
+    float nX, nY, nW, nH;
+    instance->CalculateNativeCoordinates(x, y, w, h, &nX, &nY, &nW, &nH);
+
+    Color color;
+    int alpha;
+    if (colorText != nullptr) {
+        ParseColor(colorText, &color, &alpha);
+        if (alpha == -1) color.a = instance->_currentAlpha;
+    } else {
+        color = instance->_currentColor;
+        color.a = instance->_currentAlpha;
+    }
+
+    DrawRectanglePro({nX, nY, nW * instance->_currentDrawScale.x, nH * instance->_currentDrawScale.y},
+                     {nW * instance->_currentDrawScale.x / 2, nH * instance->_currentDrawScale.y / 2},
+                     instance->_currentDrawRotation, color);
+}
+
 void MSRuntime::Screen_DrawSprite(const char* sprite, const float x, const float y, const float w, const float h) {
     const MSRuntime* instance = MSRuntime::GetInstance();
 
@@ -176,7 +208,7 @@ void MSRuntime::Screen_DrawSprite(const char* sprite, const float x, const float
         size_t spriteNameLength = dotPosition - sprite;
         strncpy(spriteName, sprite, spriteNameLength);
         spriteName[spriteNameLength] = '\0';
-    }else {
+    } else {
         strncpy(spriteName, sprite, strlen(sprite));
     }
 
@@ -201,9 +233,9 @@ void MSRuntime::Screen_DrawSprite(const char* sprite, const float x, const float
 
     DrawTexturePro(ms_sprite->Texture,
                    sourceRec,
-                   {nX, nY, nW, nH},
+                   {nX, nY, nW * instance->_currentDrawScale.x, nH * instance->_currentDrawScale.y},
                    {nW / 2, nH / 2},
-                   0, tint);
+                   instance->_currentDrawRotation, tint);
 }
 
 void MSRuntime::Screen_DrawSpritePart(const char* sprite, const float px, const float py, const float pw,
@@ -221,9 +253,9 @@ void MSRuntime::Screen_DrawSpritePart(const char* sprite, const float px, const 
 
     DrawTexturePro(ms_sprite->Texture,
                    {px, py, pw, ph},
-                   {nX, nY, nW, nH},
+                   {nX, nY, nW * instance->_currentDrawScale.x, nH * instance->_currentDrawScale.y},
                    {nW / 2, nH / 2},
-                   0, tint);
+                   instance->_currentDrawRotation, tint);
 }
 
 void MSRuntime::Screen_DrawText(const char* text, const float x, const float y, const float size,
@@ -234,6 +266,7 @@ void MSRuntime::Screen_DrawText(const char* text, const float x, const float y, 
     int alpha;
     if (colorText != nullptr) {
         ParseColor(colorText, &color, &alpha);
+        if (alpha == -1) color.a = instance->_currentAlpha;
     } else {
         color = instance->_currentColor;
         color.a = instance->_currentAlpha;
@@ -256,7 +289,16 @@ void MSRuntime::Screen_DrawText(const char* text, const float x, const float y, 
     // maybe because of the requirement of the clear type fonts to be loaded in big size?
 
     Vector2 textSize = MeasureTextEx(*font, text, scaledSize, 0);
-    DrawTextEx(*font, text, {n_x - textSize.x / 2, n_y - textSize.y / 2}, scaledSize, 0, color);
+
+    rlPushMatrix();
+    rlTranslatef(n_x, n_y, 0); // set position
+    rlRotatef(instance->_currentDrawRotation, 0, 0, 1);
+    rlScalef(instance->_currentDrawScale.x, instance->_currentDrawScale.y, 1);
+    rlTranslatef(-textSize.x / 2, -textSize.y / 2, 0); // center text by moving the origin point
+
+    DrawTextPro(*font, text, {0, 0}, {0, 0}, 0, scaledSize, 0, color);
+
+    rlPopMatrix();
 }
 
 bool MSRuntime::Screen_IsFontReady(const char* font_name) {

@@ -81,6 +81,36 @@ static JSValue JS_SetFont(JSContext* ctx, JSValueConst this_val, int argc, JSVal
     return JS_UNDEFINED;
 }
 
+static JSValue JS_SetDrawRotation(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
+    double rotation;
+    JS_ToFloat64(ctx, &rotation, argv[0]);
+    MSRuntime::Screen_SetDrawRotation(static_cast<float>(rotation));
+    return JS_UNDEFINED;
+}
+
+static JSValue JS_SetDrawScale(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
+    double scaleX, scaleY;
+    JS_ToFloat64(ctx, &scaleX, argv[0]);
+    JS_ToFloat64(ctx, &scaleY, argv[1]);
+    MSRuntime::Screen_SetDrawScale(static_cast<float>(scaleX), static_cast<float>(scaleY));
+    return JS_UNDEFINED;
+}
+
+static JSValue JS_FillRect(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
+    double x = 0.0f, y = 0.0f, w = 0.0f, h = 0.0f;
+    const char* colorText = JS_ToCString(ctx, argv[4]);
+    JS_ToFloat64(ctx, &x, argv[0]);
+    JS_ToFloat64(ctx, &y, argv[1]);
+    JS_ToFloat64(ctx, &w, argv[2]);
+    JS_ToFloat64(ctx, &h, argv[3]);
+
+    MSRuntime::Screen_FillRect(static_cast<float>(x), static_cast<float>(y), static_cast<float>(w),
+                               static_cast<float>(h), colorText);
+
+    JS_FreeCString(ctx, colorText);
+    return JS_UNDEFINED;
+}
+
 static JSValue JS_DrawSprite(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
     const char* sprite = JS_ToCString(ctx, argv[0]);
     double x = 0.0f, y = 0.0f, w = 0.0f, h = 0.0f;
@@ -167,7 +197,7 @@ static JSValue JS_RuntimeInitialized(JSContext* ctx, JSValueConst this_val, int 
     return JS_UNDEFINED;
 }
 
-static const JSCFunctionListEntry js_raylib_funcs[12] = {
+static const JSCFunctionListEntry js_raylib_funcs[15] = {
     JS_CFUNC_DEF("CBreak", 1, JS_Break),
     JS_CFUNC_DEF("CConsoleInfo", 1, JS_ConsoleInfo),
     JS_CFUNC_DEF("CConsoleError", 1, JS_ConsoleError),
@@ -179,6 +209,9 @@ static const JSCFunctionListEntry js_raylib_funcs[12] = {
     JS_CFUNC_DEF("CSetColor", 1, JS_SetColor),
     JS_CFUNC_DEF("CSetAlpha", 1, JS_SetAlpha),
     JS_CFUNC_DEF("CSetFont", 1, JS_SetFont),
+    JS_CFUNC_DEF("CSetDrawRotation", 1, JS_SetDrawRotation),
+    JS_CFUNC_DEF("CSetDrawScale", 2, JS_SetDrawScale),
+    JS_CFUNC_DEF("CFillRect", 5, JS_FillRect),
     JS_CFUNC_DEF("CDrawSprite", 5, JS_DrawSprite),
     JS_CFUNC_DEF("CDrawSpritePart", 9, JS_DrawSpritePart),
     JS_CFUNC_DEF("CDrawText", 5, JS_DrawText),

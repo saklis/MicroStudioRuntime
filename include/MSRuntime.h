@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "raylib.h"
+#include "rlgl.h"
 
 #include "quickjs.h"
 
@@ -83,10 +84,16 @@ public:
 
     static void Screen_SetFont(const char* font);
 
+    static void Screen_SetDrawRotation(float rotation);
+
+    static void Screen_SetDrawScale(float scaleX, float scaleY);
+
+    static void Screen_FillRect(float x, float y, float w, float h, const char* colorText);
+
     static void Screen_DrawSprite(const char* sprite, float x, float y, float w, float h);
 
     static void Screen_DrawSpritePart(const char* sprite, float px, float py, float pw, float ph,
-                                     float x, float y, float w, float h);
+                                      float x, float y, float w, float h);
 
     static void Screen_DrawText(const char* text, float x, float y, float size, const char* colorText);
 
@@ -96,7 +103,7 @@ public:
     //////////////////////////////////////////////////////////////////////////////////////////
 
     // Static method to provide access to the instance
-    static MSRuntime *GetInstance() {
+    static MSRuntime* GetInstance() {
         static MSRuntime instance;
         return &instance;
     }
@@ -126,13 +133,19 @@ protected:
     // Current font for drawing text
     std::string _currentFont = "BitCell";
 
+    // Current draw rotation in degrees
+    float _currentDrawRotation = 0.0f;
+
+    // Current draw scale
+    Vector2 _currentDrawScale = {1.0f, 1.0f};
+
     // Calculates native coordinates from coords in microstudio
     void CalculateNativeCoordinates(float x, float y, float* n_x, float* n_y) const;
 
     void CalculateNativeCoordinates(float x, float y, float w, float h, float* n_x,
                                     float* n_y, float* n_w, float* n_h) const;
 
-    const char *CalculateAspectRatio(MSRuntime_Orientation orientation, int screen_width, int screen_height);
+    const char* CalculateAspectRatio(MSRuntime_Orientation orientation, int screen_width, int screen_height);
 
     // Asset library
     std::unique_ptr<MSAssetsManager> _assets = std::make_unique<MSAssetsManager>();

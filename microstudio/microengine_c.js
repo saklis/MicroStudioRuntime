@@ -2876,13 +2876,16 @@ CUpdateScreenSize = function(width, height, aspect, orientation)
           return screen.setDrawAnchor(ax, ay);
         },
         setDrawRotation: function(rotation) {
-          return screen.setDrawRotation(rotation);
+          CSetDrawRotation(rotation);
+          //return screen.setDrawRotation(rotation);
         },
         setDrawScale: function(x, y) {
-          return screen.setDrawScale(x, y);
+          CSetDrawScale(x, y);
+          //return screen.setDrawScale(x, y);
         },
         fillRect: function(x, y, w, h, c) {
-          return screen.fillRect(x, y, w, h, c);
+          CFillRect(x, y, w, h, c);
+          //return screen.fillRect(x, y, w, h, c);
         },
         fillRoundRect: function(x, y, w, h, r, c) {
           return screen.fillRoundRect(x, y, w, h, r, c);

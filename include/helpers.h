@@ -15,7 +15,7 @@ int ParseColor(const char* colorStr, Color* color, int* alpha) {
     if (color == NULL || colorStr == NULL)
         return -1; // Invalid arguments
 
-    *alpha = -1; // set alpha to -1 by default to signal that alpha should not be overwritten with color
+    *alpha = -1; // set alpha to -1 by default to signal that alpha should not be overwritten with color. This behavior is used in Screen_SetColor
 
     // Initialize color to default value
     color->r = 0;
