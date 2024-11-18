@@ -7,11 +7,13 @@ set(RAYLIB_DIR "C:/raylib/raylib-5.0_win32_mingw-w64")
 set(QUICKJS_DIR "C:/quickjs")
 
 set(HEADER_FILES
+        "${PROJECT_SOURCE_DIR}/3rd_party/nlohmann/json.hpp"
         "${PROJECT_SOURCE_DIR}/include/AssetsManager.h"
         "${PROJECT_SOURCE_DIR}/include/helpers.h"
         "${PROJECT_SOURCE_DIR}/include/JS_API.h"
         "${PROJECT_SOURCE_DIR}/include/MSRuntime.h"
         "${PROJECT_SOURCE_DIR}/include/MSSprite.h"
+        "${PROJECT_SOURCE_DIR}/include/MSMap.h"
 )
 
 set(SOURCE_FILES
@@ -26,6 +28,7 @@ target_include_directories(MicroStudioRuntime PRIVATE
         "${PROJECT_SOURCE_DIR}/include"
         "${RAYLIB_DIR}/include"
         "${QUICKJS_DIR}/include/quickjs"
+        "${PROJECT_SOURCE_DIR}/3rd_party/nlohmann"
 )
 
 target_link_directories(MicroStudioRuntime PRIVATE

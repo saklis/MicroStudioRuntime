@@ -72,6 +72,9 @@ public:
     // Called every frame
     static MSRuntime_ReturnValue Tick(float deltaTime, std::string& errorMsg);
 
+    // Get specific image from assets
+    static MSSprite* GetImage(const std::string& imageName);
+
     //////////////////////////////////////////////////////////////////////////////////////////
     // MICROSTUDIO API
 
@@ -94,6 +97,8 @@ public:
 
     static void Screen_DrawSpritePart(const char* sprite, float px, float py, float pw, float ph,
                                       float x, float y, float w, float h);
+
+    static void Screen_DrawMap(const char* name, float x, float y, float w, float h);
 
     static void Screen_DrawText(const char* text, float x, float y, float size, const char* colorText);
 

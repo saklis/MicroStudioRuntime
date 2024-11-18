@@ -303,7 +303,7 @@ int ParseColor(const char* colorStr, Color* color, int* alpha) {
     return 0; // Success
 }
 
-extern std::unordered_map<int32_t, std::pair<const char *, const char *> > Ray2MicroKeyMap = {
+std::unordered_map<int32_t, std::pair<const char *, const char *> > Ray2MicroKeyMap = {
     {KEY_NULL, {"UNIDENTIFIED", "UNIDENTIFIED"}}, // Key: NULL, used for no key pressed
     // Alphanumeric keys
     {KEY_APOSTROPHE, {"'", "QUOTE"}}, // Key: '

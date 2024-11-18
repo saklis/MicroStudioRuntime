@@ -1,7 +1,4 @@
-﻿//
-// Created by Sebastian on 24.10.2024.
-//
-#include <cstdio>
+﻿#include <cstdio>
 #include <cstring>
 
 #include "MSRuntime.h"
@@ -209,7 +206,7 @@ void MSRuntime::Screen_DrawSprite(const char* sprite, const float x, const float
         strncpy(spriteName, sprite, spriteNameLength);
         spriteName[spriteNameLength] = '\0';
     } else {
-        strncpy(spriteName, sprite, strlen(sprite));
+        strncpy(spriteName, sprite, strlen(sprite) + 1);
     }
 
     const MSSprite* ms_sprite = instance->_assets->GetSprite(spriteName);
@@ -256,6 +253,33 @@ void MSRuntime::Screen_DrawSpritePart(const char* sprite, const float px, const 
                    {nX, nY, nW * instance->_currentDrawScale.x, nH * instance->_currentDrawScale.y},
                    {nW / 2, nH / 2},
                    instance->_currentDrawRotation, tint);
+}
+
+void MSRuntime::Screen_DrawMap(const char* name, const float x, const float y, const float w, const float h) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+
+    const MSMap* map = instance->_assets->GetMap(name);
+    if (!map) return; // if the map doesn't exist, return
+
+    float scaledBlockWidth = w / map->Width;
+    float scaledBlockHeight = h / map->Height;
+
+    const float MAP_TO_WORLD_X = x - map->Width * scaledBlockWidth / 2 + scaledBlockWidth / 2;
+    const float MAP_TO_WORLD_Y = y - map->Height * scaledBlockHeight / 2 + scaledBlockHeight / 2;
+
+    for (int dataIndex = 0; dataIndex < map->Data.size(); dataIndex++) {
+        std::string spriteName = map->Sprites[map->Data[dataIndex]];
+        if (spriteName != "0") {
+            int mapX = dataIndex % map->Width;
+            int mapY = dataIndex / map->Width;
+
+            float worldX = static_cast<float>(mapX) * scaledBlockWidth + MAP_TO_WORLD_X;
+            float worldY = static_cast<float>(mapY) * scaledBlockHeight + MAP_TO_WORLD_Y;
+            float worldWidth = scaledBlockWidth;
+            float worldHeight = scaledBlockHeight;
+            MSRuntime::Screen_DrawSprite(spriteName.c_str(), worldX, worldY, worldWidth, worldHeight);
+        }
+    }
 }
 
 void MSRuntime::Screen_DrawText(const char* text, const float x, const float y, const float size,
@@ -422,6 +446,10 @@ MSRuntime_ReturnValue MSRuntime::Tick(const float deltaTime, std::string& errorM
     JS_FreeValue(instance->_context, global_obj);
 
     return OK;
+}
+
+MSSprite* MSRuntime::GetImage(const std::string& imageName) {
+    return MSRuntime::GetInstance()->_assets->GetSprite(imageName);
 }
 
 MSRuntime_ReturnValue MSRuntime::RegisterMicroStudioLibraries(std::string& errorMsg) const {

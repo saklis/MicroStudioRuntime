@@ -1,7 +1,5 @@
 ﻿#include "AssetsManager.h"
 
-#include <filesystem>
-
 bool MSAssetsManager::AssetsExists(const std::string& assetsPath) {
     if (std::filesystem::exists(assetsPath)) {
         for (const auto& entry: std::filesystem::recursive_directory_iterator(assetsPath)) {
@@ -14,141 +12,86 @@ bool MSAssetsManager::AssetsExists(const std::string& assetsPath) {
     return false;
 }
 
-bool MSAssetsManager::ReadResourceManifest(JSContext* js_context, std::string& errorMsg) {
-    JSValue global_obj = JS_GetGlobalObject(js_context);
-    JSValue resources_obj = JS_GetPropertyStr(js_context, global_obj, "resources");
-    if (JS_IsException(resources_obj)) {
-        JSValue exception = JS_GetException(js_context);
-        const char* ex_msg = JS_ToCString(js_context, exception);
+bool MSAssetsManager::ReadResourceManifest(JSContext* jsContext, std::string& errorMsg) {
+    const char* script = "JSON.stringify(resources);";
+
+    JSValue evalResult = JS_Eval(jsContext, script, strlen(script), "<input>", JS_EVAL_TYPE_GLOBAL);
+    if (JS_IsException(evalResult)) {
+        JSValue exception = JS_GetException(jsContext);
+        const char* ex_msg = JS_ToCString(jsContext, exception);
         errorMsg = ex_msg;
-        JS_FreeCString(js_context, ex_msg);
-        JS_FreeValue(js_context, exception);
+        JS_FreeCString(jsContext, ex_msg);
 
-        JS_FreeValue(js_context, resources_obj);
-        JS_FreeValue(js_context, global_obj);
+        JS_FreeValue(jsContext, exception);
+        JS_FreeValue(jsContext, evalResult);
         return false;
     }
 
-    JSValue images_array = JS_GetPropertyStr(js_context, resources_obj, "images");
-    if (!JS_IsArray(js_context, images_array)) {
-        errorMsg = "Failed to read images array from resources manifest";
-
-        JS_FreeValue(js_context, images_array);
-        JS_FreeValue(js_context, resources_obj);
-        JS_FreeValue(js_context, global_obj);
+    const char* jsonString = JS_ToCString(jsContext, evalResult);
+    if (!jsonString) {
+        errorMsg = "Failed to convert JSValue to string";
+        JS_FreeValue(jsContext, evalResult);
         return false;
     }
 
-    uint32_t images_length = 0;
-    JSValue images_array_length = JS_GetPropertyStr(js_context, images_array, "length");
-    if (JS_IsException(images_array_length)) {
-        JSValue exception = JS_GetException(js_context);
-        const char* ex_msg = JS_ToCString(js_context, exception);
-        errorMsg = ex_msg;
-        JS_FreeCString(js_context, ex_msg);
-        JS_FreeValue(js_context, exception);
+    JS_FreeValue(jsContext, evalResult);
 
-        JS_FreeValue(js_context, images_array_length);
-        JS_FreeValue(js_context, images_array);
-        JS_FreeValue(js_context, resources_obj);
-        JS_FreeValue(js_context, global_obj);
-        return false;
-    }
-    if(JS_ToUint32(js_context, &images_length, images_array_length) < 0) {
-        JSValue exception = JS_GetException(js_context);
-        const char* ex_msg = JS_ToCString(js_context, exception);
-        errorMsg = ex_msg;
-        JS_FreeCString(js_context, ex_msg);
-        JS_FreeValue(js_context, exception);
+    nlohmann::json resources_json = nlohmann::json::parse(jsonString);
 
-        JS_FreeValue(js_context, images_array_length);
-        JS_FreeValue(js_context, images_array);
-        JS_FreeValue(js_context, resources_obj);
-        JS_FreeValue(js_context, global_obj);
-        return false;
-    }
-    JS_FreeValue(js_context, images_array_length);
+    auto images = resources_json.at("images");
+    for (const auto& image: images) {
+        MSSprite sprite;
+        sprite.FileName = image.at("file").get<std::string>();
 
-    // iterate over the images array
-    for (uint32_t i = 0; i < images_length; i++) {
+        if (image.contains("properties")) {
+            auto properties = image.at("properties");
 
-        // get item from index
-        JSValue item = JS_GetPropertyUint32(js_context, images_array, i);
-        if (JS_IsException(item)) {
-            JSValue exception = JS_GetException(js_context);
-            const char* ex_msg = JS_ToCString(js_context, exception);
-            errorMsg = ex_msg;
-            JS_FreeCString(js_context, ex_msg);
-            JS_FreeValue(js_context, exception);
+            if (properties.contains("frames")) {
+                sprite.Frames = properties.at("frames").get<int>();
+                sprite.IsAnimation = sprite.Frames >= 2;
+            }
 
-            JS_FreeValue(js_context, item);
-
-            JS_FreeValue(js_context, images_array);
-            JS_FreeValue(js_context, resources_obj);
-            JS_FreeValue(js_context, global_obj);
-            return false;
+            if (properties.contains("fps")) {
+                sprite.FPS = properties.at("fps").get<int>();
+                sprite.FrameTime = 1.0f / static_cast<float>(sprite.FPS);
+            }
         }
 
-        // Extract 'file'
-        std::string image_index; // modified 'file' field without extension, used as index for _sprites
-        JSValue file_val = JS_GetPropertyStr(js_context, item, "file");
-        const char* file_str = JS_ToCString(js_context, file_val);
-        if (file_str) {
-            image_index = file_str;
-            image_index.resize(image_index.length() - 4);
-            _sprites[image_index].FileName = file_str; // implicit copy from const char* to std::string
-        } else {
-            errorMsg = "Failed to read 'file' field from item in resources manifest. Item's index: " + std::to_string(i);
+        std::string imageIndex; // modified 'FileName' field without extension
+        imageIndex = sprite.FileName;
+        imageIndex.resize(imageIndex.length() - 4);
 
-            JS_FreeCString(js_context, file_str);
-            JS_FreeValue(js_context, file_val);
-
-            JS_FreeValue(js_context, item);
-
-            JS_FreeValue(js_context, images_array);
-            JS_FreeValue(js_context, resources_obj);
-            JS_FreeValue(js_context, global_obj);
-            return false;
-        }
-
-        // Extract 'properties'
-        JSValue properties_obj = JS_GetPropertyStr(js_context, item, "properties");
-        if (JS_IsObject(properties_obj)) {
-            // Extract 'frames'
-            JSValue frames_val = JS_GetPropertyStr(js_context, properties_obj, "frames");
-            if (!JS_IsUndefined(frames_val)) {
-                int32_t frames = 0;
-                if (JS_ToInt32(js_context, &frames, frames_val) >= 0) {
-                    _sprites[image_index].IsAnimation = frames > 1;
-                    _sprites[image_index].Frames = frames;
-                }
-            }
-            JS_FreeValue(js_context, frames_val);
-
-            // Extract 'fps'
-            JSValue fps_val = JS_GetPropertyStr(js_context, properties_obj, "fps");
-            if (!JS_IsUndefined(fps_val)) {
-                int32_t fps = 0;
-                if (JS_ToInt32(js_context, &fps, fps_val) >= 0) {
-                    _sprites[image_index].FPS = fps;
-                    _sprites[image_index].FrameTime = 1.0f / static_cast<float>(fps);
-                }
-            }
-            JS_FreeValue(js_context, fps_val);
-
-        } // no 'else' here, because not all items have 'properties' object
-
-        JS_FreeValue(js_context, properties_obj);
-        JS_FreeCString(js_context, file_str);
-        JS_FreeValue(js_context, file_val);
-
-        JS_FreeValue(js_context, item);
+        this->_sprites[imageIndex] = sprite;
     }
 
-    // free QuickJS resources
-    JS_FreeValue(js_context, images_array);
-    JS_FreeValue(js_context, resources_obj);
-    JS_FreeValue(js_context, global_obj);
+    auto maps = resources_json.at("maps");
+    for (auto it = maps.begin(); it != maps.end(); ++it) {
+        std::string mapName = it.key();
+        std::string mapJsonString = it.value().get<std::string>();
+        nlohmann::json mapJson = nlohmann::json::parse(mapJsonString);
+
+        MSMap map;
+        map.Name = mapName;
+        map.Width = mapJson.at("width").get<int>();
+        map.Height = mapJson.at("height").get<int>();
+        map.BlockWidth = mapJson.at("block_width").get<int>();
+        map.BlockHeight = mapJson.at("block_height").get<int>();
+
+        for (const auto& sprite: mapJson.at("sprites")) {
+            if (sprite.is_string()) {
+                std::string spriteName = sprite.get<std::string>();
+                map.Sprites.push_back(sprite.get<std::string>());
+            } else if (sprite.is_number()) {
+                map.Sprites.push_back(std::to_string(sprite.get<int>()));
+            }
+        }
+
+        for (const auto& data: mapJson.at("data")) {
+            map.Data.push_back(data.get<unsigned int>());
+        }
+
+        this->_maps[mapName] = map;
+    }
 
     return true;
 }
@@ -162,7 +105,8 @@ bool MSAssetsManager::LoadAssets(const std::string& assetsPath, std::string& err
         if (std::filesystem::exists(spritePath) && std::filesystem::is_regular_file(spritePath)) {
             this->_sprites[sprite.first].Texture = LoadTexture(spritePath.c_str());
             if (this->_sprites[sprite.first].IsAnimation) {
-                this->_sprites[sprite.first].FrameHeight = this->_sprites[sprite.first].Texture.height / this->_sprites[sprite.first].Frames;
+                this->_sprites[sprite.first].FrameHeight =
+                        this->_sprites[sprite.first].Texture.height / this->_sprites[sprite.first].Frames;
             }
         } else {
             errorMsg = "Sprite file not found: " + spritePath;
@@ -211,6 +155,15 @@ Font* MSAssetsManager::GetFont(const std::string& fontName) {
     auto font = this->_fonts.find(fontName);
     if (font != this->_fonts.end()) {
         return &(font->second);
+    } else {
+        return nullptr;
+    }
+}
+
+MSMap* MSAssetsManager::GetMap(const std::string& mapName) {
+    auto map = this->_maps.find(mapName);
+    if (map != this->_maps.end()) {
+        return &(map->second);
     } else {
         return nullptr;
     }

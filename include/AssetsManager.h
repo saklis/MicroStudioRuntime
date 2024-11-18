@@ -1,11 +1,13 @@
 ﻿#pragma once
 
 #include <quickjs.h>
-#include <vector>
 #include <string>
 #include <unordered_map>
 
+#include "json.hpp"
+
 #include "MSSprite.h"
+#include "MSMap.h"
 #include "raylib.h"
 
 class MSAssetsManager {
@@ -14,7 +16,7 @@ public:
 
     static bool AssetsExists(const std::string& assetsPath);
 
-    bool ReadResourceManifest(JSContext* js_context, std::string& errorMsg);
+    bool ReadResourceManifest(JSContext* jsContext, std::string& errorMsg);
 
     bool LoadAssets(const std::string& assetsPath, std::string& errorMsg);
 
@@ -24,11 +26,14 @@ public:
 
     Font* GetFont(const std::string& fontName);
 
+    MSMap* GetMap(const std::string& mapName);
+
     void Update(float deltaTime);
 
 protected:
     std::string _assetsPath;
 
     std::unordered_map<std::string, MSSprite> _sprites;
+    std::unordered_map<std::string, MSMap> _maps;
     std::unordered_map<std::string, Font> _fonts;
 };

@@ -51,6 +51,15 @@ CUpdateScreenSize = function(width, height, aspect, orientation)
   globalThis.runtime.orientation = orientation;
 }
 
+class Image {
+  constructor(width, height) {
+    this.width = width;
+    this.height = height;
+  }
+}
+// Attach the Image class to the global object
+globalThis.Image = Image;
+
 // CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
 //     if (w < 2 * r) {
 //       r = w / 2;
@@ -681,22 +690,22 @@ CUpdateScreenSize = function(width, height, aspect, orientation)
     constructor(url1, sources, listener) {    
       this.url = url1;
       this.sources = sources;
-      // this.resources = resources;
+      this.resources = resources;
       this.listener = listener;
       this.screen = new Screen(this);
       this.audio = new AudioCore(this);
       this.keyboard = new Keyboard();
-      // this.gamepad = new Gamepad();
-      // this.asset_manager = new AssetManager(this);
-      // this.sprites = {};
-      // this.maps = {};
-      // this.sounds = {};
-      // this.music = {};
-      // this.assets = {};
-      // this.touch = {};
-      // this.mouse = this.screen.mouse;
+      this.gamepad = new Gamepad();
+      this.asset_manager = new AssetManager(this);
+      this.sprites = {};
+      this.maps = {};
+      this.sounds = {};
+      this.music = {};
+      this.assets = {};
+      this.touch = {};
+      this.mouse = this.screen.mouse;
       this.previous_init = null;
-      // this.random = new Random(0);
+      this.random = new Random(0);
       this.orientation = window.orientation;
       this.aspect = window.aspect;
       this.report_errors = true;
@@ -765,6 +774,62 @@ CUpdateScreenSize = function(width, height, aspect, orientation)
   
     start() {
       var a, i, j, k, key, l, len1, len2, len3, len4, len5, m, n, name, o, ref, ref1, ref2, ref3, ref4, ref5, s, value;
+
+      ref = this.resources.images;
+      for (j = 0, len1 = ref.length; j < len1; j++) {
+        i = ref[j];
+        s = LoadSprite(i.file, i.properties, () => {
+          // this.updateMaps();
+          // return this.checkStartReady();
+        });
+        name = i.file.split(".")[0].replace(/-/g, "/");
+        s.name = name;
+        this.sprites[name] = s;
+      }
+      if (Array.isArray(this.resources.maps)) {
+        ref1 = this.resources.maps;
+        for (k = 0, len2 = ref1.length; k < len2; k++) {
+          m = ref1[k];
+          name = m.file.split(".")[0].replace(/-/g, "/");
+          this.maps[name] = LoadMap(m.file, () => {
+            return this.checkStartReady();
+          });
+          this.maps[name].name = name;
+        }
+      } else if (this.resources.maps != null) {
+        if (window.player == null) {
+          window.player = this.listener;
+        }
+        ref2 = this.resources.maps;
+        for (key in ref2) {
+          value = ref2[key];
+          this.updateMap(key, 0, value);
+        }
+      }
+      // ref3 = this.resources.sounds;
+      // for (l = 0, len3 = ref3.length; l < len3; l++) {
+      //   s = ref3[l];
+      //   name = s.file.split(".")[0];
+      //   s = new Sound(this.audio, this.url + "sounds/" + s.file + "?v=" + s.version);
+      //   s.name = name;
+      //   this.sounds[name] = s;
+      // }
+      // ref4 = this.resources.music;
+      // for (n = 0, len4 = ref4.length; n < len4; n++) {
+      //   m = ref4[n];
+      //   name = m.file.split(".")[0];
+      //   m = new Music(this.audio, this.url + "music/" + m.file + "?v=" + m.version);
+      //   m.name = name;
+      //   this.music[name] = m;
+      // }
+      // ref5 = this.resources.assets;
+      // for (o = 0, len5 = ref5.length; o < len5; o++) {
+      //   a = ref5[o];
+      //   name = a.file.split(".")[0];
+      //   name = name.replace(/-/g, "/");
+      //   a.name = name;
+      //   this.assets[name] = a;
+      // }
 
       this.startReady();
 
@@ -890,19 +955,19 @@ CUpdateScreenSize = function(width, height, aspect, orientation)
         // audio: this.audio.getInterface(),
         keyboard: this.keyboard.keyboard,
         // gamepad: this.gamepad.status,
-        // sprites: this.sprites,
+        sprites: this.sprites,
         // sounds: this.sounds,
         // music: this.music,
         // assets: this.assets,
         // asset_manager: this.asset_manager.getInterface(),
-        // maps: this.maps,
+        maps: this.maps,
         // touch: this.touch,
         // mouse: this.mouse,
         // fonts: window.fonts,
         // Sound: Sound.createSoundClass(this.audio),
         // Image: msImage,
-        // Sprite: Sprite,
-        // Map: MicroMap
+        Sprite: Sprite,
+        Map: MicroMap
       };
       // if (window.graphics === "M3D") {
       //   global.M3D = M3D;
@@ -1167,7 +1232,6 @@ CUpdateScreenSize = function(width, height, aspect, orientation)
     }
   
     timer() {
-      //CBreak("screen width: " + this.screen.width + " height: " + this.screen.height);
       var ds, dt, fps, i, j, ref, time, update_rate;
       if (this.stopped) {
         return;
@@ -2917,7 +2981,8 @@ CUpdateScreenSize = function(width, height, aspect, orientation)
           return screen.drawSpritePart(sprite, sx, sy, sw, sh, x, y, w, h);
         },
         drawMap: function(map, x, y, w, h) {
-          return screen.drawMap(map, x, y, w, h);
+          CDrawMap(map, x, y, w, h);
+          //return screen.drawMap(map, x, y, w, h);
         },
         drawText: function(text, x, y, size, color) {
           CDrawText(text, x, y, size, color);
@@ -4434,44 +4499,45 @@ CUpdateScreenSize = function(width, height, aspect, orientation)
   
   };
   
-  this.LoadSprite = function(url, properties, loaded) {
+  this.LoadSprite = function(fileName, properties, loaded) {
     var img, sprite;
     sprite = new Sprite(0, 0);
     sprite.ready = 0;
-    img = new Image;
-    if (location.protocol !== "file:") {
-      img.crossOrigin = "Anonymous";
-    }
-    img.src = url;
-    img.onload = () => {
-      var frame, i, j, numframes, ref;
+    img = CGetImage(fileName) //new Image;
+    // if (location.protocol !== "file:") {
+    //   img.crossOrigin = "Anonymous";
+    // }
+    // img.src = url;
+    var frame, i, j, numframes, ref;
+    sprite.ready = true;
+    if (img.width > 0 && img.height > 0) {
+      numframes = 1;
+      if ((properties != null) && (properties.frames != null)) {
+        numframes = properties.frames;
+      }
+      if (properties.fps != null) {
+        sprite.fps = properties.fps;
+      }
+      sprite.width = img.width;
+      sprite.height = Math.round(img.height / numframes);
+      sprite.frames = [];
+      for (i = j = 0, ref = numframes - 1; (0 <= ref ? j <= ref : j >= ref); i = 0 <= ref ? ++j : --j) {
+        frame = new msImage(sprite.width, sprite.height);
+        //frame.initContext();
+        //frame.context.drawImage(img, 0, -i * sprite.height);
+        sprite.frames.push(frame);
+      }
       sprite.ready = true;
-      if (img.width > 0 && img.height > 0) {
-        numframes = 1;
-        if ((properties != null) && (properties.frames != null)) {
-          numframes = properties.frames;
-        }
-        if (properties.fps != null) {
-          sprite.fps = properties.fps;
-        }
-        sprite.width = img.width;
-        sprite.height = Math.round(img.height / numframes);
-        sprite.frames = [];
-        for (i = j = 0, ref = numframes - 1; (0 <= ref ? j <= ref : j >= ref); i = 0 <= ref ? ++j : --j) {
-          frame = new msImage(sprite.width, sprite.height);
-          frame.initContext();
-          frame.context.drawImage(img, 0, -i * sprite.height);
-          sprite.frames.push(frame);
-        }
-        sprite.ready = true;
-      }
-      if (loaded != null) {
-        return loaded();
-      }
-    };
-    img.onerror = () => {
-      return sprite.ready = 1;
-    };
+    }
+    // if (loaded != null) {
+    //   return loaded();
+    // }
+    // img.onload = () => {
+    //
+    // };
+    // img.onerror = () => {
+    //   return sprite.ready = 1;
+    // };
     return sprite;
   };
   
@@ -4507,19 +4573,19 @@ CUpdateScreenSize = function(width, height, aspect, orientation)
         this.height = height;
         this.centered = centered;
         this.class = msImage;
-        if (this.width instanceof Image) {
-          this.image = this.width;
-          this.width = this.image.width;
-          this.height = this.image.height;
-        } else if (this.width instanceof HTMLCanvasElement) {
-          this.canvas = this.width;
-          this.width = this.canvas.width;
-          this.height = this.canvas.height;
-        } else {
-          this.canvas = document.createElement("canvas");
-          this.canvas.width = this.width = Math.round(this.width);
-          this.canvas.height = this.height = Math.round(this.height);
-        }
+        // if (this.width instanceof Image) {
+        //   this.image = this.width;
+        //   this.width = this.image.width;
+        //   this.height = this.image.height;
+        // } else if (this.width instanceof HTMLCanvasElement) {
+        //   this.canvas = this.width;
+        //   this.width = this.canvas.width;
+        //   this.height = this.canvas.height;
+        // } else {
+        //   this.canvas = document.createElement("canvas");
+        //   this.canvas.width = this.width = Math.round(this.width);
+        //   this.canvas.height = this.height = Math.round(this.height);
+        // }
       }
   
       setRGB(x, y, r, g, b) {
@@ -5475,27 +5541,31 @@ CUpdateScreenSize = function(width, height, aspect, orientation)
   
   })();
   
-  this.LoadMap = function(url, loaded) {
+  this.LoadMap = function(mapName, loaded) {
     var map, req;
     map = new MicroMap(1, 1, 1, 1);
-    map.ready = false;
-    req = new XMLHttpRequest();
-    req.onreadystatechange = (function(_this) {
-      return function(event) {
-        if (req.readyState === XMLHttpRequest.DONE) {
-          map.ready = true;
-          if (req.status === 200) {
-            UpdateMap(map, req.responseText);
-          }
-          map.needs_update = true;
-          if (loaded != null) {
-            return loaded();
-          }
-        }
-      };
-    })(this);
-    req.open("GET", url);
-    req.send();
+    map.ready = true;
+
+    CBreak("mapName:" + mapName);
+    UpdateMap(map, "")
+
+    // req = new XMLHttpRequest();
+    // req.onreadystatechange = (function(_this) {
+    //   return function(event) {
+    //     if (req.readyState === XMLHttpRequest.DONE) {
+    //       map.ready = true;
+    //       if (req.status === 200) {
+    //         UpdateMap(map, req.responseText);
+    //       }
+    //       map.needs_update = true;
+    //       if (loaded != null) {
+    //         return loaded();
+    //       }
+    //     }
+    //   };
+    // })(this);
+    // req.open("GET", url);
+    // req.send();
     return map;
   };
   
@@ -6267,7 +6337,7 @@ CUpdateScreenSize = function(width, height, aspect, orientation)
       //src = document.getElementById("code").innerText
       this.source_count = 0;
       this.sources = {};
-      // this.resources = resources;
+      this.resources = resources;
       this.request_id = 1;
       this.pending_requests = {};
       // if (resources.sources != null) {

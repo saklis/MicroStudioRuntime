@@ -155,6 +155,25 @@ static JSValue JS_DrawSpritePart(JSContext* ctx, JSValueConst this_val, int argc
     return JS_UNDEFINED;
 }
 
+static JSValue JS_DrawMap(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
+    const char* name = JS_ToCString(ctx, argv[0]);
+    double x = 0.0f, y = 0.0f, w = 0.0f, h = 0.0f;
+    JS_ToFloat64(ctx, &x, argv[1]);
+    JS_ToFloat64(ctx, &y, argv[2]);
+    JS_ToFloat64(ctx, &w, argv[3]);
+    if (!JS_IsUndefined(argv[4])) {
+        JS_ToFloat64(ctx, &h, argv[4]);
+    } else {
+        h = w; // microScript allow for height to be unset, in that case we use width
+    }
+
+    MSRuntime::Screen_DrawMap(name, static_cast<float>(x), static_cast<float>(y), static_cast<float>(w),
+                              static_cast<float>(h));
+
+    JS_FreeCString(ctx, name);
+    return JS_UNDEFINED;
+}
+
 static JSValue JS_DrawText(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
     double x = 0.0f, y = 0.0f, size = 0.0f;
 
@@ -197,12 +216,48 @@ static JSValue JS_RuntimeInitialized(JSContext* ctx, JSValueConst this_val, int 
     return JS_UNDEFINED;
 }
 
-static const JSCFunctionListEntry js_raylib_funcs[15] = {
+static JSValue JS_GetImage(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
+    const char* imageFileName = JS_ToCString(ctx, argv[0]);
+
+    // modified 'FileName' field without extension
+    std::string imageIndex = imageFileName;
+    imageIndex.resize(imageIndex.length() - 4);
+
+    JS_FreeCString(ctx, imageFileName);
+
+    MSSprite* sprite = MSRuntime::GetImage(imageIndex);
+    if (sprite == nullptr) {
+        return JS_ThrowReferenceError(ctx, ("Requested file '" + imageIndex + "' not found").c_str());
+    }
+
+    JSValue globalObj = JS_GetGlobalObject(ctx);
+    JSValue imageConstructor = JS_GetPropertyStr(ctx, globalObj, "Image");
+    JS_FreeValue(ctx, globalObj);
+
+    if (JS_IsUndefined(imageConstructor)) {
+        return JS_ThrowReferenceError(ctx, "Image constructor not found");
+    }
+
+    JSValue args[2];
+    args[0] = JS_NewInt32(ctx, sprite->Texture.width);
+    args[1] = JS_NewInt32(ctx, sprite->Texture.height);
+
+    JSValue image = JS_CallConstructor(ctx, imageConstructor, 2, args);
+
+    JS_FreeValue(ctx, imageConstructor);
+    JS_FreeValue(ctx, args[0]);
+    JS_FreeValue(ctx, args[1]);
+
+    return image; // if image is an exception, it'll get propagated to the caller
+}
+
+static const JSCFunctionListEntry js_raylib_funcs[17] = {
     JS_CFUNC_DEF("CBreak", 1, JS_Break),
     JS_CFUNC_DEF("CConsoleInfo", 1, JS_ConsoleInfo),
     JS_CFUNC_DEF("CConsoleError", 1, JS_ConsoleError),
 
     JS_CFUNC_DEF("CRuntimeInitialized", 0, JS_RuntimeInitialized),
+    JS_CFUNC_DEF("CGetImage", 1, JS_GetImage),
 
     // screen
     JS_CFUNC_DEF("CClear", 1, JS_Clear),
@@ -214,6 +269,7 @@ static const JSCFunctionListEntry js_raylib_funcs[15] = {
     JS_CFUNC_DEF("CFillRect", 5, JS_FillRect),
     JS_CFUNC_DEF("CDrawSprite", 5, JS_DrawSprite),
     JS_CFUNC_DEF("CDrawSpritePart", 9, JS_DrawSpritePart),
+    JS_CFUNC_DEF("CDrawMap", 5, JS_DrawMap),
     JS_CFUNC_DEF("CDrawText", 5, JS_DrawText),
     JS_CFUNC_DEF("CIsFontReady", 1, JS_IsFontReady),
 };
