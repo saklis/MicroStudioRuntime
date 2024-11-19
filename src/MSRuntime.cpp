@@ -296,7 +296,7 @@ void MSRuntime::Screen_DrawText(const char* text, const float x, const float y, 
         color.a = instance->_currentAlpha;
     }
 
-    Font* font = instance->_assets->GetFont(instance->_currentFont);
+    const Font* font = instance->_assets->GetFont(instance->_currentFont);
     if (font == nullptr) return; // if the font doesn't exist, return
 
     float n_x = 0.0f, n_y = 0.0f;
@@ -328,6 +328,14 @@ void MSRuntime::Screen_DrawText(const char* text, const float x, const float y, 
 bool MSRuntime::Screen_IsFontReady(const char* font_name) {
     const MSRuntime* instance = MSRuntime::GetInstance();
     return instance->_assets->GetFont(font_name) != nullptr;
+}
+
+void MSRuntime::Audio_PlaySound(const char* name, float volume, float pitch, float pan, bool loop) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+    const MSSound* sound = instance->_assets->GetSound(name);
+    if (sound == nullptr) return; // if the sound doesn't exist, return
+
+    PlaySound(sound->Sound);
 }
 
 void MSRuntime::CalculateNativeCoordinates(const float x, const float y, float* n_x, float* n_y) const {
@@ -448,7 +456,7 @@ MSRuntime_ReturnValue MSRuntime::Tick(const float deltaTime, std::string& errorM
     return OK;
 }
 
-MSSprite* MSRuntime::GetImage(const std::string& imageName) {
+const MSSprite* MSRuntime::GetImage(const std::string& imageName) {
     return MSRuntime::GetInstance()->_assets->GetSprite(imageName);
 }
 

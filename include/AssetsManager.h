@@ -8,6 +8,7 @@
 
 #include "MSSprite.h"
 #include "MSMap.h"
+#include "MSSound.h"
 #include "raylib.h"
 
 class MSAssetsManager {
@@ -22,13 +23,16 @@ public:
 
     bool UnloadAssets(std::string& errorMsg);
 
-    MSSprite* GetSprite(const std::string& sprite);
+    const MSSprite* GetSprite(const std::string& sprite);
 
-    Font* GetFont(const std::string& fontName);
+    const Font* GetFont(const std::string& fontName);
 
-    MSMap* GetMap(const std::string& mapName);
+    const MSMap* GetMap(const std::string& mapName);
+
+    const MSSound* GetSound(const std::string& soundName);
 
     void Update(float deltaTime);
+
 
 protected:
     std::string _assetsPath;
@@ -36,4 +40,5 @@ protected:
     std::unordered_map<std::string, MSSprite> _sprites;
     std::unordered_map<std::string, MSMap> _maps;
     std::unordered_map<std::string, Font> _fonts;
+    std::unordered_map<std::string, MSSound> _sounds;
 };

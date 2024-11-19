@@ -23,7 +23,12 @@ var resources = {
         "secondmap": "{\"width\":4,\"height\":4,\"block_width\":16,\"block_height\":16,\"sprites\":[0,\"icon\",\"animicon\"],\"data\":[1,0,0,1,0,2,2,0,0,2,2,0,1,0,0,1]}",
         "testmap": "{\"width\":4,\"height\":4,\"block_width\":16,\"block_height\":16,\"sprites\":[0,\"icon\"],\"data\":[1,1,1,1,0,1,0,0,0,1,0,1,1,0,1,0]}"
     },
-    "sounds": [],
+    "sounds": [{
+        "file": "jingles_pizzi10.ogg",
+        "version": 1,
+        "size": 14004,
+        "properties": {}
+    }, {"file": "jingles_sax03.ogg", "version": 1, "size": 19785, "properties": {}}],
     "music": []
 };
 
@@ -32,6 +37,9 @@ init = function()
 end
 
 update = function()
+  if keyboard.KEY_A then
+    audio.playSound("jingles_sax03", 0.5, 1, 0, 0)
+  end
 end
 
 draw = function()

@@ -14,6 +14,7 @@ set(HEADER_FILES
         "${PROJECT_SOURCE_DIR}/include/MSRuntime.h"
         "${PROJECT_SOURCE_DIR}/include/MSSprite.h"
         "${PROJECT_SOURCE_DIR}/include/MSMap.h"
+        "${PROJECT_SOURCE_DIR}/include/MSSound.h"
 )
 
 set(SOURCE_FILES

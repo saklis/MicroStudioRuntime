@@ -806,22 +806,22 @@ globalThis.Image = Image;
           this.updateMap(key, 0, value);
         }
       }
-      // ref3 = this.resources.sounds;
-      // for (l = 0, len3 = ref3.length; l < len3; l++) {
-      //   s = ref3[l];
-      //   name = s.file.split(".")[0];
-      //   s = new Sound(this.audio, this.url + "sounds/" + s.file + "?v=" + s.version);
-      //   s.name = name;
-      //   this.sounds[name] = s;
-      // }
-      // ref4 = this.resources.music;
-      // for (n = 0, len4 = ref4.length; n < len4; n++) {
-      //   m = ref4[n];
-      //   name = m.file.split(".")[0];
-      //   m = new Music(this.audio, this.url + "music/" + m.file + "?v=" + m.version);
-      //   m.name = name;
-      //   this.music[name] = m;
-      // }
+      ref3 = this.resources.sounds;
+      for (l = 0, len3 = ref3.length; l < len3; l++) {
+        s = ref3[l];
+        name = s.file.split(".")[0];
+        s = new Sound(this.audio, this.url + "sounds/" + s.file + "?v=" + s.version);
+        s.name = name;
+        this.sounds[name] = s;
+      }
+      ref4 = this.resources.music;
+      for (n = 0, len4 = ref4.length; n < len4; n++) {
+        m = ref4[n];
+        name = m.file.split(".")[0];
+        m = new Music(this.audio, this.url + "music/" + m.file + "?v=" + m.version);
+        m.name = name;
+        this.music[name] = m;
+      }
       // ref5 = this.resources.assets;
       // for (o = 0, len5 = ref5.length; o < len5; o++) {
       //   a = ref5[o];
@@ -952,20 +952,20 @@ globalThis.Image = Image;
       };
       global = {
         screen: this.screen.getInterface(),
-        // audio: this.audio.getInterface(),
+        audio: this.audio.getInterface(),
         keyboard: this.keyboard.keyboard,
-        // gamepad: this.gamepad.status,
+        gamepad: this.gamepad.status,
         sprites: this.sprites,
-        // sounds: this.sounds,
-        // music: this.music,
+        sounds: this.sounds,
+        music: this.music,
         // assets: this.assets,
         // asset_manager: this.asset_manager.getInterface(),
         maps: this.maps,
         // touch: this.touch,
-        // mouse: this.mouse,
-        // fonts: window.fonts,
-        // Sound: Sound.createSoundClass(this.audio),
-        // Image: msImage,
+        mouse: this.mouse,
+        fonts: window.fonts,
+        Sound: Sound.createSoundClass(this.audio),
+        Image: msImage,
         Sprite: Sprite,
         Map: MicroMap
       };
@@ -5650,7 +5650,8 @@ globalThis.Image = Image;
           return audio.cancelBeeps();
         },
         playSound: function(sound, volume, pitch, pan, loopit) {
-          return audio.playSound(sound, volume, pitch, pan, loopit);
+          CPlaySound(sound, volume, pitch, pan, loopit);
+          //return audio.playSound(sound, volume, pitch, pan, loopit);
         },
         playMusic: function(music, volume, loopit) {
           return audio.playMusic(music, volume, loopit);
@@ -6106,22 +6107,23 @@ globalThis.Image = Image;
       if (typeof MicroSound !== "undefined" && MicroSound !== null) {
         this.class = MicroSound;
       }
-      if (this.url instanceof AudioBuffer) {
-        this.buffer = this.url;
-        this.ready = 1;
-      } else {
-        this.ready = 0;
-        request = new XMLHttpRequest();
-        request.open('GET', this.url, true);
-        request.responseType = 'arraybuffer';
-        request.onload = () => {
-          return this.audio.context.decodeAudioData(request.response, (buffer1) => {
-            this.buffer = buffer1;
-            return this.ready = 1;
-          });
-        };
-        request.send();
-      }
+      this.ready = 1;
+      // if (this.url instanceof AudioBuffer) {
+      //   this.buffer = this.url;
+      //   this.ready = 1;
+      // } else {
+      //   this.ready = 0;
+      //   request = new XMLHttpRequest();
+      //   request.open('GET', this.url, true);
+      //   request.responseType = 'arraybuffer';
+      //   request.onload = () => {
+      //     return this.audio.context.decodeAudioData(request.response, (buffer1) => {
+      //       this.buffer = buffer1;
+      //       return this.ready = 1;
+      //     });
+      //   };
+      //   request.send();
+      // }
     }
   
     play(volume = 1, pitch = 1, pan = 0, loopit = false) {
@@ -6269,6 +6271,7 @@ globalThis.Image = Image;
       this.playing = true;
       this.tag.loop = loopit ? true : false;
       this.tag.volume = volume;
+      CBreak("Music.play() not implemented");
       if (this.audio.isStarted()) {
         this.tag.play();
       } else {

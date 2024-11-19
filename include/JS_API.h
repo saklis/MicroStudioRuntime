@@ -199,6 +199,20 @@ static JSValue JS_IsFontReady(JSContext* ctx, JSValueConst this_val, int argc, J
     return JS_NewInt32(ctx, isReady ? 1 : 0);
 }
 
+static JSValue JS_PlaySound(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
+    const char* name = JS_ToCString(ctx, argv[0]);
+    double volume = 1.0f, pitch = 1.0f, pan = 0.0f;
+    JS_ToFloat64(ctx, &volume, argv[1]);
+    JS_ToFloat64(ctx, &pitch, argv[2]);
+    JS_ToFloat64(ctx, &pan, argv[3]);
+    bool loop = JS_ToBool(ctx, argv[4]);
+
+    MSRuntime::Audio_PlaySound(name, static_cast<float>(volume), static_cast<float>(pitch), static_cast<float>(pan), loop);
+
+    JS_FreeCString(ctx, name);
+    return JS_UNDEFINED;
+}
+
 static JSValue JS_ConsoleInfo(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
     const char* text = JS_ToCString(ctx, argv[0]);
     JS_FreeCString(ctx, text);
@@ -225,7 +239,7 @@ static JSValue JS_GetImage(JSContext* ctx, JSValueConst this_val, int argc, JSVa
 
     JS_FreeCString(ctx, imageFileName);
 
-    MSSprite* sprite = MSRuntime::GetImage(imageIndex);
+    const MSSprite* sprite = MSRuntime::GetImage(imageIndex);
     if (sprite == nullptr) {
         return JS_ThrowReferenceError(ctx, ("Requested file '" + imageIndex + "' not found").c_str());
     }
@@ -251,7 +265,7 @@ static JSValue JS_GetImage(JSContext* ctx, JSValueConst this_val, int argc, JSVa
     return image; // if image is an exception, it'll get propagated to the caller
 }
 
-static const JSCFunctionListEntry js_raylib_funcs[17] = {
+static const JSCFunctionListEntry js_raylib_funcs[18] = {
     JS_CFUNC_DEF("CBreak", 1, JS_Break),
     JS_CFUNC_DEF("CConsoleInfo", 1, JS_ConsoleInfo),
     JS_CFUNC_DEF("CConsoleError", 1, JS_ConsoleError),
@@ -272,6 +286,9 @@ static const JSCFunctionListEntry js_raylib_funcs[17] = {
     JS_CFUNC_DEF("CDrawMap", 5, JS_DrawMap),
     JS_CFUNC_DEF("CDrawText", 5, JS_DrawText),
     JS_CFUNC_DEF("CIsFontReady", 1, JS_IsFontReady),
+
+    //audio
+    JS_CFUNC_DEF("CPlaySound", 5, JS_PlaySound),
 };
 
 // JS API END

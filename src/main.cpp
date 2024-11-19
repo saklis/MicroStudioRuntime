@@ -11,6 +11,7 @@ int main() {
     InitWindow(screenWidth, screenHeight, "MicroStudio Runtime");
     SetTargetFPS(60);
     SetExitKey(KEY_NULL);
+    InitAudioDevice();
 
     // init window by drawing a single frame. Should be replaced with something more cool.
     // Maybe loading screen with microStudio logo?
@@ -78,6 +79,7 @@ int main() {
 
     MSRuntime_ReturnValue MSRuntimeFreeStatus = MSRuntime::Free(errorMsg);
 
+    CloseAudioDevice();
     CloseWindow();
 
     if (MSRuntimeFreeStatus != OK) {

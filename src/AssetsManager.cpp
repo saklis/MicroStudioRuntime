@@ -93,6 +93,17 @@ bool MSAssetsManager::ReadResourceManifest(JSContext* jsContext, std::string& er
         this->_maps[mapName] = map;
     }
 
+    auto sounds = resources_json.at("sounds");
+    for (const auto& sound_json: sounds) {
+        MSSound sound;
+        sound.FilePath = sound_json.at("file").get<std::string>();
+        std::string name = sound.FilePath;
+        name.resize(name.length() - 4);
+        sound.Name = name;
+
+        _sounds[name] = sound;
+    }
+
     return true;
 }
 
@@ -100,13 +111,12 @@ bool MSAssetsManager::LoadAssets(const std::string& assetsPath, std::string& err
     this->_assetsPath = assetsPath;
 
     std::string spritesPath = assetsPath + "sprites/";
-    for (const auto& sprite: this->_sprites) {
-        std::string spritePath = spritesPath + sprite.second.FileName;
+    for (auto& [spriteKey, msSprite]: this->_sprites) {
+        std::string spritePath = spritesPath + msSprite.FileName;
         if (std::filesystem::exists(spritePath) && std::filesystem::is_regular_file(spritePath)) {
-            this->_sprites[sprite.first].Texture = LoadTexture(spritePath.c_str());
-            if (this->_sprites[sprite.first].IsAnimation) {
-                this->_sprites[sprite.first].FrameHeight =
-                        this->_sprites[sprite.first].Texture.height / this->_sprites[sprite.first].Frames;
+            msSprite.Texture = LoadTexture(spritePath.c_str());
+            if (msSprite.IsAnimation) {
+                msSprite.FrameHeight = msSprite.Texture.height / msSprite.Frames;
             }
         } else {
             errorMsg = "Sprite file not found: " + spritePath;
@@ -125,6 +135,14 @@ bool MSAssetsManager::LoadAssets(const std::string& assetsPath, std::string& err
         }
     }
 
+    std::string soundsPath = assetsPath + "sounds/";
+    for (auto& [soundKey, msSound]: this->_sounds) {
+        std::string soundPath = soundsPath + msSound.FilePath;
+        if (std::filesystem::exists(soundPath) && std::filesystem::is_regular_file(soundPath)) {
+            msSound.Sound = LoadSound(soundPath.c_str());
+        }
+    }
+
     return true;
 }
 
@@ -139,10 +157,15 @@ bool MSAssetsManager::UnloadAssets(std::string& errorMsg) {
     }
     this->_fonts.clear();
 
+    for (auto& [name, sound]: this->_sounds) {
+        UnloadSound(sound.Sound);
+    }
+    this->_sounds.clear();
+
     return true;
 }
 
-MSSprite* MSAssetsManager::GetSprite(const std::string& sprite) {
+const MSSprite* MSAssetsManager::GetSprite(const std::string& sprite) {
     auto texture = this->_sprites.find(sprite);
     if (texture != this->_sprites.end()) {
         return &(texture->second);
@@ -151,7 +174,7 @@ MSSprite* MSAssetsManager::GetSprite(const std::string& sprite) {
     }
 }
 
-Font* MSAssetsManager::GetFont(const std::string& fontName) {
+const Font* MSAssetsManager::GetFont(const std::string& fontName) {
     auto font = this->_fonts.find(fontName);
     if (font != this->_fonts.end()) {
         return &(font->second);
@@ -160,10 +183,19 @@ Font* MSAssetsManager::GetFont(const std::string& fontName) {
     }
 }
 
-MSMap* MSAssetsManager::GetMap(const std::string& mapName) {
+const MSMap* MSAssetsManager::GetMap(const std::string& mapName) {
     auto map = this->_maps.find(mapName);
     if (map != this->_maps.end()) {
         return &(map->second);
+    } else {
+        return nullptr;
+    }
+}
+
+const MSSound* MSAssetsManager::GetSound(const std::string& soundName) {
+    auto sound = this->_sounds.find(soundName);
+    if (sound != this->_sounds.end()) {
+        return &(sound->second);
     } else {
         return nullptr;
     }

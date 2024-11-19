@@ -73,7 +73,7 @@ public:
     static MSRuntime_ReturnValue Tick(float deltaTime, std::string& errorMsg);
 
     // Get specific image from assets
-    static MSSprite* GetImage(const std::string& imageName);
+    static const MSSprite* GetImage(const std::string& imageName);
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // MICROSTUDIO API
@@ -103,6 +103,9 @@ public:
     static void Screen_DrawText(const char* text, float x, float y, float size, const char* colorText);
 
     static bool Screen_IsFontReady(const char* font_name);
+
+    // AUDIO
+    static void Audio_PlaySound(const char* name, float volume, float pitch, float pan, bool loop);
 
     // END OF MICROSTUDIO API
     //////////////////////////////////////////////////////////////////////////////////////////
