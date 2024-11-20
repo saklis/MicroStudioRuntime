@@ -354,7 +354,7 @@ std::unordered_map<int32_t, std::pair<const char *, const char *> > Ray2MicroKey
     {KEY_RIGHT_BRACKET, {"]", "BRACKET_RIGHT"}}, // Key: ]
     {KEY_GRAVE, {"`", "BACKQUOTE"}}, // Key: `
     // Function keys
-    {KEY_SPACE, {" ", "SAPCE"}}, // Key: Space
+    {KEY_SPACE, {" ", "SPACE"}}, // Key: Space
     {KEY_ESCAPE, {"ESCAPE", "ESCAPE"}}, // Key: Esc
     {KEY_ENTER, {"ENTER", "ENTER"}}, // Key: Enter
     {KEY_TAB, {"TAB", "TAB"}}, // Key: Tab

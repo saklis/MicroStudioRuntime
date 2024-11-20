@@ -1471,7 +1471,7 @@ globalThis.Image = Image;
       //   delete this.files_loaded;
       // }
       // this.gamepad.update();
-      // this.keyboard.update();
+      //this.keyboard.update();
       // try {
       //   this.vm.context.global.system.inputs.gamepad = this.gamepad.count > 0 ? 1 : 0;
       // } catch (error) {

@@ -34,38 +34,31 @@ var resources = {
 
 globalThis.microScriptCode = `function()
 init = function()
+  x = 0
+  y = 0
 end
 
 update = function()
+  if keyboard.KEY_W then
+    y += 2
+  end
+  
   if keyboard.KEY_A then
-    audio.playSound("jingles_sax03", 0.5, 1, 0, 0)
+    x -= 2
+  end
+  
+  if keyboard.KEY_S then
+    y -= 2
+  end
+  
+  if keyboard.KEY_D then
+    x += 2
   end
 end
 
 draw = function()
   screen.clear()
   
-  screen.drawMap("secondmap", 0, 0, 200, 200)
-  
-  local map = maps["secondmap"]
-  screen.drawText(map.get(0,3), -75, 75, 20, "rgb(255,0,0)")
-  screen.drawText(map.get(1,3), -25, 75, 20, "rgb(255,0,0)")
-  screen.drawText(map.get(2,3), 25, 75, 20, "rgb(255,0,0)")
-  screen.drawText(map.get(3,3), 75, 75, 20, "rgb(255,0,0)")
-  
-  screen.drawText(map.get(0,2), -75, 25, 20, "rgb(255,0,0)")
-  screen.drawText(map.get(1,2), -25, 25, 20, "rgb(255,0,0)")
-  screen.drawText(map.get(2,2), 25, 25, 20, "rgb(255,0,0)")
-  screen.drawText(map.get(3,2), 75, 25, 20, "rgb(255,0,0)")
-  
-  screen.drawText(map.get(0,1), -75, -25, 20, "rgb(255,0,0)")
-  screen.drawText(map.get(1,1), -25, -25, 20, "rgb(255,0,0)")
-  screen.drawText(map.get(2,1), 25, -25, 20, "rgb(255,0,0)")
-  screen.drawText(map.get(3,1), 75, -25, 20, "rgb(255,0,0)")
-  
-  screen.drawText(map.get(0,0), -75, -75, 20, "rgb(255,0,0)")
-  screen.drawText(map.get(1,0), -25, -75, 20, "rgb(255,0,0)")
-  screen.drawText(map.get(2,0), 25, -75, 20, "rgb(255,0,0)")
-  screen.drawText(map.get(3,0), 75, -75, 20, "rgb(255,0,0)")
+  screen.drawSprite("icon", x, y, 20, 20)
 end
 end()`;
