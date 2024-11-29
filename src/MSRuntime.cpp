@@ -330,12 +330,76 @@ bool MSRuntime::Screen_IsFontReady(const char* font_name) {
     return instance->_assets->GetFont(font_name) != nullptr;
 }
 
-void MSRuntime::Audio_PlaySound(const char* name, float volume, float pitch, float pan, bool loop) {
+void MSRuntime::Audio_PlaySound(const char* name, int uniqueId, float volume, float pitch, float pan, bool loop) {
     MSRuntime* instance = MSRuntime::GetInstance();
-    const MSSound* sound = instance->_assets->GetSound(name);
+    MSSoundInstance* soundInstance = instance->_assets->GetIdleSoundInstance(name);
+    if (soundInstance == nullptr) return; // if the sound doesn't exist, return
+
+    soundInstance->UniqueId = uniqueId;
+    SetSoundVolume(soundInstance->Instance, volume);
+    SetSoundPitch(soundInstance->Instance, pitch);
+    SetSoundPan(soundInstance->Instance, pan);
+    soundInstance->IsLooping = loop;
+
+    PlaySound(soundInstance->Instance);
+}
+
+void MSRuntime::Audio_Sound_SetVolume(const char* soundName, int uniqueId, float volume) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+    const MSSoundInstance* sound = instance->_assets->GetSoundInstance(soundName, uniqueId);
     if (sound == nullptr) return; // if the sound doesn't exist, return
 
-    PlaySound(sound->Sound);
+    SetSoundVolume(sound->Instance, volume);
+}
+
+void MSRuntime::Audio_Sound_SetPitch(const char* soundName, int UniqueId, float pitch) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+    const MSSoundInstance* sound = instance->_assets->GetSoundInstance(soundName, UniqueId);
+    if (sound == nullptr) return; // if the sound doesn't exist, return
+
+    SetSoundPitch(sound->Instance, pitch);
+}
+
+void MSRuntime::Audio_Sound_SetPan(const char* soundName, int uniqueId, float pan) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+    const MSSoundInstance* sound = instance->_assets->GetSoundInstance(soundName, uniqueId);
+    if (sound == nullptr) return; // if the sound doesn't exist, return
+
+    SetSoundPan(sound->Instance, pan);
+}
+
+void MSRuntime::Audio_Sound_Stop(const char* soundName, int uniqueId) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+    const MSSoundInstance* sound = instance->_assets->GetSoundInstance(soundName, uniqueId);
+    if (sound == nullptr) return; // if the sound doesn't exist, return
+
+    StopSound(sound->Instance);
+}
+
+void MSRuntime::Audio_PlayMusic(const char* name, float volume, bool loop) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+    MSMusic* music = instance->_assets->GetMusic(name);
+    if (music == nullptr) return; // if the music doesn't exist, return
+
+    music->Music.looping = loop;
+
+    PlayMusicStream(music->Music);
+}
+
+void MSRuntime::Audio_Music_Play(const char* name) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+    MSMusic* music = instance->_assets->GetMusic(name);
+    if (music == nullptr) return; // if the music doesn't exist, return
+
+    ResumeMusicStream(music->Music);
+}
+
+void MSRuntime::Audio_Music_Stop(const char* name) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+    MSMusic* music = instance->_assets->GetMusic(name);
+    if (music == nullptr) return; // if the music doesn't exist, return
+
+    PauseMusicStream(music->Music);
 }
 
 void MSRuntime::CalculateNativeCoordinates(const float x, const float y, float* n_x, float* n_y) const {
@@ -425,7 +489,9 @@ MSRuntime_ReturnValue MSRuntime::Tick(const float deltaTime, std::string& errorM
     MSRuntime* instance = MSRuntime::GetInstance();
     if (instance->_isRuntimeInitialized == false) return OK; // skip tick if runtime is not initialized
 
-    // update assets to modify animation's current frame
+    // update assets
+    // - update animation's current frame
+    // - restart playing sound if it's looped
     instance->_assets->Update(deltaTime);
 
     // Retrieve the 'update' function

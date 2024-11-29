@@ -6,59 +6,32 @@ window.skip_service_worker = true;
 window.exported_project = true;
 window.ms_use_server = false;
 
+window.fonts = ["BitCell","Edunline"];
 var resources = {
-    "images": [{
-        "file": "animicon.png",
-        "version": 8,
-        "size": 1133,
-        "properties": {"frames": 4, "fps": 5}
-    }, {"file": "icon.png", "version": 0, "size": 0, "properties": {}}, {
-        "file": "manyicon.png",
-        "version": 18,
-        "size": 521,
-        "properties": {"frames": 1, "fps": 5}
-    }],
+    "images": [{"file": "icon.png", "version": 0, "size": 0, "properties": {}}],
     "assets": [],
-    "maps": {
-        "secondmap": "{\"width\":4,\"height\":4,\"block_width\":16,\"block_height\":16,\"sprites\":[0,\"icon\",\"animicon\"],\"data\":[1,0,0,1,0,2,2,0,0,2,2,0,1,0,0,1]}",
-        "testmap": "{\"width\":4,\"height\":4,\"block_width\":16,\"block_height\":16,\"sprites\":[0,\"icon\"],\"data\":[1,1,1,1,0,1,0,0,0,1,0,1,1,0,1,0]}"
-    },
-    "sounds": [{
-        "file": "jingles_pizzi10.ogg",
-        "version": 1,
-        "size": 14004,
-        "properties": {}
-    }, {"file": "jingles_sax03.ogg", "version": 1, "size": 19785, "properties": {}}],
+    "maps": {},
+    "sounds": [],
     "music": []
 };
 
 globalThis.microScriptCode = `function()
 init = function()
-  x = 0
-  y = 0
+  screen.loadFont("BitCell")
+  screen.loadFont("Edunline")
 end
 
 update = function()
-  if keyboard.KEY_W then
-    y += 2
-  end
-  
-  if keyboard.KEY_A then
-    x -= 2
-  end
-  
-  if keyboard.KEY_S then
-    y -= 2
-  end
-  
-  if keyboard.KEY_D then
-    x += 2
-  end
 end
 
 draw = function()
   screen.clear()
   
-  screen.drawSprite("icon", x, y, 20, 20)
+  if screen.isFontReady("Edunline") then
+    screen.setFont("Edunline")
+    screen.drawText("Edunline", -20, 0, 10, "#FFFFFF")
+    screen.setFont("BitCell")
+    screen.drawText("font ready", 35, 0, 10, "#FFFFFF")
+  end
 end
 end()`;

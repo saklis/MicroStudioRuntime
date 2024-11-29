@@ -105,7 +105,21 @@ public:
     static bool Screen_IsFontReady(const char* font_name);
 
     // AUDIO
-    static void Audio_PlaySound(const char* name, float volume, float pitch, float pan, bool loop);
+    static void Audio_PlaySound(const char* name, int uniqueId, float volume, float pitch, float pan, bool loop);
+
+    static void Audio_Sound_SetVolume(const char* soundName, int uniqueId, float volume);
+
+    static void Audio_Sound_SetPitch(const char* soundName, int UniqueId, float pitch);
+
+    static void Audio_Sound_SetPan(const char* soundName, int uniqueId, float pan);
+
+    static void Audio_Sound_Stop(const char* soundName, int uniqueId);
+
+    static void Audio_PlayMusic(const char* name, float volume, bool loop);
+
+    static void Audio_Music_Play(const char* name);
+
+    static void Audio_Music_Stop(const char* name);
 
     // END OF MICROSTUDIO API
     //////////////////////////////////////////////////////////////////////////////////////////

@@ -104,6 +104,17 @@ bool MSAssetsManager::ReadResourceManifest(JSContext* jsContext, std::string& er
         _sounds[name] = sound;
     }
 
+    auto musics = resources_json.at("music");
+    for (const auto& music_json: musics) {
+        MSMusic music;
+        music.FileName = music_json.at("file").get<std::string>();
+        std::string name = music.FileName;
+        name.resize(name.length() - 4);
+        music.Name = name;
+
+        _musics[name] = music;
+    }
+
     return true;
 }
 
@@ -140,6 +151,20 @@ bool MSAssetsManager::LoadAssets(const std::string& assetsPath, std::string& err
         std::string soundPath = soundsPath + msSound.FilePath;
         if (std::filesystem::exists(soundPath) && std::filesystem::is_regular_file(soundPath)) {
             msSound.Sound = LoadSound(soundPath.c_str());
+            for (int i = 0; i < SoundInstancePoolSize; i++) {
+                MSSoundInstance soundInstance;
+                soundInstance.Instance = LoadSoundAlias(msSound.Sound);
+                msSound.SoundInstances.push_back(soundInstance);
+            }
+        }
+    }
+
+    std::string musicsPath = assetsPath + "music/";
+    for (auto& [musicKey, msMusic]: this->_musics) {
+        std::string musicPath = musicsPath + msMusic.FileName;
+        if (std::filesystem::exists(musicPath) && std::filesystem::is_regular_file(musicPath)) {
+            msMusic.Music = LoadMusicStream(musicPath.c_str());
+            msMusic.Music.looping = false;
         }
     }
 
@@ -158,9 +183,19 @@ bool MSAssetsManager::UnloadAssets(std::string& errorMsg) {
     this->_fonts.clear();
 
     for (auto& [name, sound]: this->_sounds) {
+        for (auto& soundInstance: sound.SoundInstances) {
+            StopSound(soundInstance.Instance);
+            UnloadSoundAlias(soundInstance.Instance);
+        }
         UnloadSound(sound.Sound);
     }
     this->_sounds.clear();
+
+    for (auto& [name, music]: this->_musics) {
+        StopMusicStream(music.Music);
+        UnloadMusicStream(music.Music);
+    }
+    this->_musics.clear();
 
     return true;
 }
@@ -192,13 +227,46 @@ const MSMap* MSAssetsManager::GetMap(const std::string& mapName) {
     }
 }
 
-const MSSound* MSAssetsManager::GetSound(const std::string& soundName) {
+MSSound* MSAssetsManager::GetSound(const std::string& soundName) {
     auto sound = this->_sounds.find(soundName);
     if (sound != this->_sounds.end()) {
         return &(sound->second);
     } else {
         return nullptr;
     }
+}
+
+MSMusic* MSAssetsManager::GetMusic(const std::string& name) {
+    auto music = this->_musics.find(name);
+    if (music != this->_musics.end()) {
+        return &music->second;
+    } else {
+        return nullptr;
+    }
+}
+
+MSSoundInstance* MSAssetsManager::GetSoundInstance(const std::string& soundName, int uniqueId) {
+    auto sound = this->_sounds.find(soundName);
+    if (sound != this->_sounds.end()) {
+        for (int i = 0; i < SoundInstancePoolSize; i++) {
+            if (sound->second.SoundInstances[i].UniqueId == uniqueId) {
+                return &sound->second.SoundInstances[i];
+            }
+        }
+    }
+    return nullptr;
+}
+
+MSSoundInstance* MSAssetsManager::GetIdleSoundInstance(const std::string& soundName) {
+    auto sound = this->_sounds.find(soundName);
+    if (sound != this->_sounds.end()) {
+        for (auto& soundInstance: sound->second.SoundInstances) {
+            if (!IsSoundPlaying(soundInstance.Instance)) {
+                return &soundInstance;
+            }
+        }
+    }
+    return nullptr;
 }
 
 void MSAssetsManager::Update(float deltaTime) {
@@ -212,6 +280,20 @@ void MSAssetsManager::Update(float deltaTime) {
                     sprite.CurrentFrame = 0;
                 }
             }
+        }
+    }
+
+    for (auto& [name, sound]: this->_sounds) {
+        for (auto& soundInstance: sound.SoundInstances) {
+            if (soundInstance.IsLooping && !IsSoundPlaying(soundInstance.Instance)) {
+                PlaySound(soundInstance.Instance);
+            }
+        }
+    }
+
+    for (auto& [name, music]: this->_musics) {
+        if (IsMusicStreamPlaying(music.Music)) {
+            UpdateMusicStream(music.Music);
         }
     }
 }

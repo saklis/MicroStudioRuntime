@@ -201,13 +201,89 @@ static JSValue JS_IsFontReady(JSContext* ctx, JSValueConst this_val, int argc, J
 
 static JSValue JS_PlaySound(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
     const char* name = JS_ToCString(ctx, argv[0]);
+    int uniqueId = 0 ;
     double volume = 1.0f, pitch = 1.0f, pan = 0.0f;
-    JS_ToFloat64(ctx, &volume, argv[1]);
-    JS_ToFloat64(ctx, &pitch, argv[2]);
-    JS_ToFloat64(ctx, &pan, argv[3]);
-    bool loop = JS_ToBool(ctx, argv[4]);
+    JS_ToInt32(ctx, &uniqueId, argv[1]);
+    if (!JS_IsUndefined(argv[2])) JS_ToFloat64(ctx, &volume, argv[2]);
+    if (!JS_IsUndefined(argv[3])) JS_ToFloat64(ctx, &pitch, argv[3]);
+    if (!JS_IsUndefined(argv[4])) JS_ToFloat64(ctx, &pan, argv[4]);
+    bool loop = JS_ToBool(ctx, argv[5]);
 
-    MSRuntime::Audio_PlaySound(name, static_cast<float>(volume), static_cast<float>(pitch), static_cast<float>(pan), loop);
+    MSRuntime::Audio_PlaySound(name, uniqueId, static_cast<float>(volume), static_cast<float>(pitch), static_cast<float>(pan), loop);
+
+    JS_FreeCString(ctx, name);
+    return JS_UNDEFINED;
+}
+
+static JSValue JS_Sound_SetVolume(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
+    const char* soundName = JS_ToCString(ctx, argv[0]);
+    int uniqueId = 0;
+    double volume;
+    JS_ToInt32(ctx, &uniqueId, argv[1]);
+    JS_ToFloat64(ctx, &volume, argv[2]);
+    MSRuntime::Audio_Sound_SetVolume(soundName, uniqueId, static_cast<float>(volume));
+    JS_FreeCString(ctx, soundName);
+    return JS_UNDEFINED;
+}
+
+static JSValue JS_Sound_SetPitch(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
+    const char* soundName = JS_ToCString(ctx, argv[0]);
+    int uniqueId = 0;
+    double pitch;
+    JS_ToInt32(ctx, &uniqueId, argv[1]);
+    JS_ToFloat64(ctx, &pitch, argv[2]);
+    MSRuntime::Audio_Sound_SetPitch(soundName, uniqueId, static_cast<float>(pitch));
+    JS_FreeCString(ctx, soundName);
+    return JS_UNDEFINED;
+}
+
+static JSValue JS_Sound_SetPan(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
+    const char* soundName = JS_ToCString(ctx, argv[0]);
+    int uniqueId = 0;
+    double pan;
+    JS_ToInt32(ctx, &uniqueId, argv[1]);
+    JS_ToFloat64(ctx, &pan, argv[2]);
+    MSRuntime::Audio_Sound_SetPan(soundName, uniqueId, static_cast<float>(pan));
+    JS_FreeCString(ctx, soundName);
+    return JS_UNDEFINED;
+}
+
+static JSValue JS_Sound_Stop(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
+    const char* soundName = JS_ToCString(ctx, argv[0]);
+    int uniqueId = 0;
+    JS_ToInt32(ctx, &uniqueId, argv[1]);
+    MSRuntime::Audio_Sound_Stop(soundName, uniqueId);
+    JS_FreeCString(ctx, soundName);
+    return JS_UNDEFINED;
+}
+
+static JSValue JS_PlayMusic(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
+    const char* name = JS_ToCString(ctx, argv[0]);
+    double volume = 1.0f;
+    if (!JS_IsUndefined(argv[1])) JS_ToFloat64(ctx, &volume, argv[1]);
+
+    bool loop = false;
+    if (!JS_IsUndefined(argv[2])) loop = JS_ToBool(ctx, argv[2]);
+
+    MSRuntime::Audio_PlayMusic(name, static_cast<float>(volume), loop);
+
+    JS_FreeCString(ctx, name);
+    return JS_UNDEFINED;
+}
+
+static JSValue JS_Music_Play(JSContext* ctx, JSValue this_val, int argc, JSValue* argv) {
+    const char* name = JS_ToCString(ctx, argv[0]);
+
+    MSRuntime::Audio_Music_Play(name);
+
+    JS_FreeCString(ctx, name);
+    return JS_UNDEFINED;
+}
+
+static JSValue JS_Music_Stop(JSContext* ctx, JSValue this_val, int argc, JSValue* argv){
+    const char* name = JS_ToCString(ctx, argv[0]);
+
+    MSRuntime::Audio_Music_Stop(name);
 
     JS_FreeCString(ctx, name);
     return JS_UNDEFINED;
@@ -265,7 +341,7 @@ static JSValue JS_GetImage(JSContext* ctx, JSValueConst this_val, int argc, JSVa
     return image; // if image is an exception, it'll get propagated to the caller
 }
 
-static const JSCFunctionListEntry js_raylib_funcs[18] = {
+static const JSCFunctionListEntry js_raylib_funcs[25] = {
     JS_CFUNC_DEF("CBreak", 1, JS_Break),
     JS_CFUNC_DEF("CConsoleInfo", 1, JS_ConsoleInfo),
     JS_CFUNC_DEF("CConsoleError", 1, JS_ConsoleError),
@@ -288,7 +364,14 @@ static const JSCFunctionListEntry js_raylib_funcs[18] = {
     JS_CFUNC_DEF("CIsFontReady", 1, JS_IsFontReady),
 
     //audio
-    JS_CFUNC_DEF("CPlaySound", 5, JS_PlaySound),
+    JS_CFUNC_DEF("CPlaySound", 6, JS_PlaySound),
+    JS_CFUNC_DEF("CSound_SetVolume", 3, JS_Sound_SetVolume),
+    JS_CFUNC_DEF("CSound_SetPitch", 3, JS_Sound_SetPitch),
+    JS_CFUNC_DEF("CSound_SetPan", 3, JS_Sound_SetPan),
+    JS_CFUNC_DEF("CSound_Stop", 3, JS_Sound_Stop),
+    JS_CFUNC_DEF("CPlayMusic", 3, JS_PlayMusic),
+    JS_CFUNC_DEF("CMusic_Play", 1, JS_Music_Play),
+    JS_CFUNC_DEF("CMusic_Stop", 1, JS_Music_Stop),
 };
 
 // JS API END
