@@ -15,14 +15,14 @@
 enum MSRuntime_ReturnValue {
     OK = 0,
     ErrorWhileInitializingQuickJS = 1,
-    MSLibraryFileDoesntExist = 3,
-    ErrorEvaluatingJSFile = 4,
-    ErrorWhileRegisteringJSFunctions = 5,
-    ErrorWhileReadingResourceManifest = 6,
-    ErrorWhileLoadingAssets = 7,
-    ErrorWhileUnloadingAssets = 8,
-    ErrorWhileStartingGame = 9,
-    ErrorWhileCallingGameTick = 10
+    MSLibraryFileDoesntExist = 2,
+    ErrorEvaluatingJSFile = 3,
+    ErrorWhileRegisteringJSFunctions = 4,
+    ErrorWhileReadingResourceManifest = 5,
+    ErrorWhileLoadingAssets = 6,
+    ErrorWhileUnloadingAssets = 7,
+    ErrorWhileStartingGame = 8,
+    ErrorWhileCallingGameTick = 9
 };
 
 enum MSRuntime_Orientation {
@@ -46,7 +46,7 @@ public:
     };
 
     std::array<std::string, 1> GameSourceFiles = {
-        "mstest.js"
+        "game.js"
     };
 
     // Initialize the runtime

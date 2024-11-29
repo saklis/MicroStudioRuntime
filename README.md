@@ -19,7 +19,7 @@ To compile:
 
 After you export your project from MicroStudio as HTML, you need to prepare files:
 * Put all js files into /microstudio directory.
-* Take a look at included mstest.js to see how to change your index.html file.
+* Take a look at included game.js to see how to change your index.html file.
 * Copy all assets folders into /assets directory
 
 MicroStudio Runtime is in very early stages and only very few features work! To see currently supported API check include/JS_API.h and `js_raylib_funcs` array.
