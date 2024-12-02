@@ -10,12 +10,13 @@ To compile:
 2. Install MINGW 32bit
 3. Compile or download Raylib binaries for MINGW.
 4. Compile or download binaries for QuickJS. For Windows, you can use https://github.com/mengmo/QuickJS-Windows-Build
-5. Install CMake
-6. For Windows, install GNU Make for Windows https://gnuwin32.sourceforge.net/packages/make.htm
-7. Clone MicroStudioRuntime
-8. Update `CMakeLists.txt` and `build.bat` to match your environment
-9. Build. For Windows, you can execute `build.bat` for automated build.
-10. Run
+5. Install SPDLIB through MSYS2 package manager `pacman -S mingw-w64-i686-spdlog`
+6. Install CMake
+7. For Windows, install GNU Make for Windows https://gnuwin32.sourceforge.net/packages/make.htm
+8. Clone MicroStudioRuntime
+9. Update `CMakeLists.txt` and `build.bat` to match your environment
+10. Build. For Windows, you can execute `build.bat` for automated build.
+11. Run
 
 After you export your project from MicroStudio as HTML, you need to prepare files:
 * Put all js files into /microstudio directory.

@@ -3,6 +3,8 @@
 
 #include "MSRuntime.h"
 
+#include <spdlog/spdlog.h>
+
 #include "JS_API.h"
 
 #include "helpers.h"
@@ -36,14 +38,14 @@ MSRuntime_ReturnValue MSRuntime::LoadAssets(std::string& errorMsg) {
         MSRuntime* instance = MSRuntime::GetInstance();
 
         // read resource manifest from JS
+        spdlog::info("Reading resource manifest");
         if (!instance->_assets->ReadResourceManifest(instance->_context, errorMsg)) {
             return ErrorWhileReadingResourceManifest;
         }
 
         // load assets
-        if (instance->_assets->LoadAssets(MSAssetsManager::DefaultAssetsPath, errorMsg)) {
-            return OK;
-        } else {
+        spdlog::info("Loading assets");
+        if (!instance->_assets->LoadAssets(MSAssetsManager::DefaultAssetsPath, errorMsg)) {
             return ErrorWhileLoadingAssets;
         }
     }
@@ -63,7 +65,7 @@ MSRuntime_ReturnValue MSRuntime::StartGame(std::string& errorMsg) {
     if (JS_IsException(result)) {
         JSValue exception = JS_GetException(instance->_context);
         const char* ex_msg = JS_ToCString(instance->_context, exception);
-        errorMsg = ex_msg;
+        errorMsg = "Error while starting new game: " + std::string(ex_msg);
         JS_FreeCString(instance->_context, ex_msg);
 
         JS_FreeValue(instance->_context, exception);
@@ -311,6 +313,7 @@ void MSRuntime::Screen_DrawText(const char* text, const float x, const float y, 
 
     scaledSize *= 1.175; // todo: NO IDEA WHY THIS IS NEEDED!
     // maybe because of the requirement of the clear type fonts to be loaded in big size?
+    // font scaling is still not quite correct
 
     Vector2 textSize = MeasureTextEx(*font, text, scaledSize, 0);
 
@@ -331,7 +334,7 @@ bool MSRuntime::Screen_IsFontReady(const char* font_name) {
 }
 
 void MSRuntime::Audio_PlaySound(const char* name, int uniqueId, float volume, float pitch, float pan, bool loop) {
-    MSRuntime* instance = MSRuntime::GetInstance();
+    const MSRuntime* instance = MSRuntime::GetInstance();
     MSSoundInstance* soundInstance = instance->_assets->GetIdleSoundInstance(name);
     if (soundInstance == nullptr) return; // if the sound doesn't exist, return
 
@@ -345,7 +348,7 @@ void MSRuntime::Audio_PlaySound(const char* name, int uniqueId, float volume, fl
 }
 
 void MSRuntime::Audio_Sound_SetVolume(const char* soundName, int uniqueId, float volume) {
-    MSRuntime* instance = MSRuntime::GetInstance();
+    const MSRuntime* instance = MSRuntime::GetInstance();
     const MSSoundInstance* sound = instance->_assets->GetSoundInstance(soundName, uniqueId);
     if (sound == nullptr) return; // if the sound doesn't exist, return
 
@@ -353,7 +356,7 @@ void MSRuntime::Audio_Sound_SetVolume(const char* soundName, int uniqueId, float
 }
 
 void MSRuntime::Audio_Sound_SetPitch(const char* soundName, int UniqueId, float pitch) {
-    MSRuntime* instance = MSRuntime::GetInstance();
+    const MSRuntime* instance = MSRuntime::GetInstance();
     const MSSoundInstance* sound = instance->_assets->GetSoundInstance(soundName, UniqueId);
     if (sound == nullptr) return; // if the sound doesn't exist, return
 
@@ -361,7 +364,7 @@ void MSRuntime::Audio_Sound_SetPitch(const char* soundName, int UniqueId, float 
 }
 
 void MSRuntime::Audio_Sound_SetPan(const char* soundName, int uniqueId, float pan) {
-    MSRuntime* instance = MSRuntime::GetInstance();
+    const MSRuntime* instance = MSRuntime::GetInstance();
     const MSSoundInstance* sound = instance->_assets->GetSoundInstance(soundName, uniqueId);
     if (sound == nullptr) return; // if the sound doesn't exist, return
 
@@ -369,7 +372,7 @@ void MSRuntime::Audio_Sound_SetPan(const char* soundName, int uniqueId, float pa
 }
 
 void MSRuntime::Audio_Sound_Stop(const char* soundName, int uniqueId) {
-    MSRuntime* instance = MSRuntime::GetInstance();
+    const MSRuntime* instance = MSRuntime::GetInstance();
     const MSSoundInstance* sound = instance->_assets->GetSoundInstance(soundName, uniqueId);
     if (sound == nullptr) return; // if the sound doesn't exist, return
 
@@ -377,7 +380,7 @@ void MSRuntime::Audio_Sound_Stop(const char* soundName, int uniqueId) {
 }
 
 void MSRuntime::Audio_PlayMusic(const char* name, float volume, bool loop) {
-    MSRuntime* instance = MSRuntime::GetInstance();
+    const MSRuntime* instance = MSRuntime::GetInstance();
     MSMusic* music = instance->_assets->GetMusic(name);
     if (music == nullptr) return; // if the music doesn't exist, return
 
@@ -387,16 +390,16 @@ void MSRuntime::Audio_PlayMusic(const char* name, float volume, bool loop) {
 }
 
 void MSRuntime::Audio_Music_Play(const char* name) {
-    MSRuntime* instance = MSRuntime::GetInstance();
-    MSMusic* music = instance->_assets->GetMusic(name);
+    const MSRuntime* instance = MSRuntime::GetInstance();
+    const MSMusic* music = instance->_assets->GetMusic(name);
     if (music == nullptr) return; // if the music doesn't exist, return
 
     ResumeMusicStream(music->Music);
 }
 
 void MSRuntime::Audio_Music_Stop(const char* name) {
-    MSRuntime* instance = MSRuntime::GetInstance();
-    MSMusic* music = instance->_assets->GetMusic(name);
+    const MSRuntime* instance = MSRuntime::GetInstance();
+    const MSMusic* music = instance->_assets->GetMusic(name);
     if (music == nullptr) return; // if the music doesn't exist, return
 
     PauseMusicStream(music->Music);
@@ -453,7 +456,7 @@ void MSRuntime::RuntimeInitialized() {
 }
 
 void MSRuntime::UpdateKeyboard(const int keyCode, const bool isDown) {
-    MSRuntime* instance = MSRuntime::GetInstance();
+    const MSRuntime* instance = MSRuntime::GetInstance();
     if (instance->_isRuntimeInitialized == false) return;
 
     auto& [code, key] = Ray2MicroKeyMap[keyCode];
@@ -486,7 +489,7 @@ void MSRuntime::UpdateKeyboard(const int keyCode, const bool isDown) {
 }
 
 MSRuntime_ReturnValue MSRuntime::Tick(const float deltaTime, std::string& errorMsg) {
-    MSRuntime* instance = MSRuntime::GetInstance();
+    const MSRuntime* instance = MSRuntime::GetInstance();
     if (instance->_isRuntimeInitialized == false) return OK; // skip tick if runtime is not initialized
 
     // update assets
@@ -544,7 +547,7 @@ MSRuntime_ReturnValue MSRuntime::RegisterJSAPIFunctions(std::string& errorMsg) c
 
     if (!JS_IsNull(exception)) {
         const char* ex_msg = JS_ToCString(this->_context, exception);
-        errorMsg = ex_msg;
+        errorMsg = "Error while registering JS API functions: " + std::string(ex_msg);
         JS_FreeCString(this->_context, ex_msg);
 
         JS_FreeValue(this->_context, exception);
@@ -594,7 +597,7 @@ MSRuntime_ReturnValue MSRuntime::RegisterJSFileInQuickJS(const char* filePath, s
     if (JS_IsException(result)) {
         const JSValue exception = JS_GetException(this->_context);
         const char* ex_msg = JS_ToCString(this->_context, exception);
-        errorMsg = ex_msg;
+        errorMsg = "Error while registering file " + std::string(filePath) + " functions: " + std::string(ex_msg);
         JS_FreeCString(this->_context, ex_msg);
 
         JS_FreeValue(this->_context, exception);

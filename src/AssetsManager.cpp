@@ -1,5 +1,7 @@
 ﻿#include "AssetsManager.h"
 
+#include <spdlog/spdlog.h>
+
 bool MSAssetsManager::AssetsExists(const std::string& assetsPath) {
     if (std::filesystem::exists(assetsPath)) {
         for (const auto& entry: std::filesystem::recursive_directory_iterator(assetsPath)) {
@@ -19,7 +21,7 @@ bool MSAssetsManager::ReadResourceManifest(JSContext* jsContext, std::string& er
     if (JS_IsException(evalResult)) {
         JSValue exception = JS_GetException(jsContext);
         const char* ex_msg = JS_ToCString(jsContext, exception);
-        errorMsg = ex_msg;
+        errorMsg = "Error while getting resources from JS runtime: " + std::string(ex_msg);
         JS_FreeCString(jsContext, ex_msg);
 
         JS_FreeValue(jsContext, exception);
@@ -29,7 +31,7 @@ bool MSAssetsManager::ReadResourceManifest(JSContext* jsContext, std::string& er
 
     const char* jsonString = JS_ToCString(jsContext, evalResult);
     if (!jsonString) {
-        errorMsg = "Failed to convert JSValue to string";
+        errorMsg = "Failed to convert 'resources' JS value to string";
         JS_FreeValue(jsContext, evalResult);
         return false;
     }
@@ -37,7 +39,9 @@ bool MSAssetsManager::ReadResourceManifest(JSContext* jsContext, std::string& er
     JS_FreeValue(jsContext, evalResult);
 
     nlohmann::json resources_json = nlohmann::json::parse(jsonString);
+    spdlog::debug("Resources JSON: {}", resources_json.dump(4));
 
+    spdlog::debug("Reading images manifest:");
     auto images = resources_json.at("images");
     for (const auto& image: images) {
         MSSprite sprite;
@@ -62,8 +66,10 @@ bool MSAssetsManager::ReadResourceManifest(JSContext* jsContext, std::string& er
         imageIndex.resize(imageIndex.length() - 4);
 
         this->_sprites[imageIndex] = sprite;
+        spdlog::debug("'" + imageIndex + "' sprite added");
     }
 
+    spdlog::debug("Reading maps manifest:");
     auto maps = resources_json.at("maps");
     for (auto it = maps.begin(); it != maps.end(); ++it) {
         std::string mapName = it.key();
@@ -91,8 +97,10 @@ bool MSAssetsManager::ReadResourceManifest(JSContext* jsContext, std::string& er
         }
 
         this->_maps[mapName] = map;
+        spdlog::debug("'" + mapName + "' map added");
     }
 
+    spdlog::debug("Reading sounds manifest:");
     auto sounds = resources_json.at("sounds");
     for (const auto& sound_json: sounds) {
         MSSound sound;
@@ -102,8 +110,10 @@ bool MSAssetsManager::ReadResourceManifest(JSContext* jsContext, std::string& er
         sound.Name = name;
 
         _sounds[name] = sound;
+        spdlog::debug("'" + name + "' sound added");
     }
 
+    spdlog::debug("Reading music manifest:");
     auto musics = resources_json.at("music");
     for (const auto& music_json: musics) {
         MSMusic music;
@@ -113,6 +123,7 @@ bool MSAssetsManager::ReadResourceManifest(JSContext* jsContext, std::string& er
         music.Name = name;
 
         _musics[name] = music;
+        spdlog::debug("'" + name + "' music added");
     }
 
     return true;
@@ -126,6 +137,12 @@ bool MSAssetsManager::LoadAssets(const std::string& assetsPath, std::string& err
         std::string spritePath = spritesPath + msSprite.FileName;
         if (std::filesystem::exists(spritePath) && std::filesystem::is_regular_file(spritePath)) {
             msSprite.Texture = LoadTexture(spritePath.c_str());
+            if (msSprite.Texture.id <= 0) {
+                errorMsg = "Unknown error while loading sprite file: " + spritePath;
+                return false;
+
+            }
+            spdlog::debug("Sprite file loaded: {}", spritePath);
             if (msSprite.IsAnimation) {
                 msSprite.FrameHeight = msSprite.Texture.height / msSprite.Frames;
             }
@@ -135,6 +152,7 @@ bool MSAssetsManager::LoadAssets(const std::string& assetsPath, std::string& err
         }
     }
 
+    //todo: maybe loading fonts should be done through manifest, too?
     std::string fontsPath = assetsPath + "fonts/";
     if (std::filesystem::exists(fontsPath) && std::filesystem::is_directory(fontsPath)) {
         for (const auto& entry: std::filesystem::directory_iterator(fontsPath)) {
@@ -142,6 +160,11 @@ bool MSAssetsManager::LoadAssets(const std::string& assetsPath, std::string& err
                 // loading font in big size, because Raylib is using stb_truetype, which doesn't support ClearType rasterization
                 // Because of this fonts will be rendered blurry if loaded in default size
                 this->_fonts[entry.path().stem().string()] = LoadFontEx(entry.path().string().c_str(), 200, NULL, 0);
+                if (this->_fonts[entry.path().stem().string()].baseSize <= 0) {
+                    errorMsg = "Unknown error while loading font file: " + entry.path().string();
+                    return false;
+                }
+                spdlog::debug("Font file loaded: {}", entry.path().string());
             }
         }
     }
@@ -151,10 +174,20 @@ bool MSAssetsManager::LoadAssets(const std::string& assetsPath, std::string& err
         std::string soundPath = soundsPath + msSound.FilePath;
         if (std::filesystem::exists(soundPath) && std::filesystem::is_regular_file(soundPath)) {
             msSound.Sound = LoadSound(soundPath.c_str());
+            if (msSound.Sound.frameCount <= 0) {
+                errorMsg = "Unknown error while loading sound file: " + soundPath;
+                return false;
+            }
+            spdlog::debug("Sound file loaded: {}", soundPath);
             for (int i = 0; i < SoundInstancePoolSize; i++) {
                 MSSoundInstance soundInstance;
                 soundInstance.Instance = LoadSoundAlias(msSound.Sound);
+                if (soundInstance.Instance.frameCount <= 0) {
+                    errorMsg = "Unknown error while loading sound alias: " + soundPath;
+                    return false;
+                }
                 msSound.SoundInstances.push_back(soundInstance);
+                spdlog::debug("Sound alias loaded: {}", soundPath);
             }
         }
     }
@@ -164,7 +197,12 @@ bool MSAssetsManager::LoadAssets(const std::string& assetsPath, std::string& err
         std::string musicPath = musicsPath + msMusic.FileName;
         if (std::filesystem::exists(musicPath) && std::filesystem::is_regular_file(musicPath)) {
             msMusic.Music = LoadMusicStream(musicPath.c_str());
+            if (msMusic.Music.frameCount <= 0) {
+                errorMsg = "Unknown error while loading music file: " + musicPath;
+                return false;
+            }
             msMusic.Music.looping = false;
+            spdlog::debug("Music file loaded: {}", musicPath);
         }
     }
 
@@ -205,6 +243,7 @@ const MSSprite* MSAssetsManager::GetSprite(const std::string& sprite) {
     if (texture != this->_sprites.end()) {
         return &(texture->second);
     } else {
+        spdlog::error("Sprite '{}' not found", sprite);
         return nullptr;
     }
 }
@@ -214,6 +253,7 @@ const Font* MSAssetsManager::GetFont(const std::string& fontName) {
     if (font != this->_fonts.end()) {
         return &(font->second);
     } else {
+        spdlog::error("Font '{}' not found", fontName);
         return nullptr;
     }
 }
@@ -223,6 +263,7 @@ const MSMap* MSAssetsManager::GetMap(const std::string& mapName) {
     if (map != this->_maps.end()) {
         return &(map->second);
     } else {
+        spdlog::error("Map '{}' not found", mapName);
         return nullptr;
     }
 }
@@ -232,6 +273,7 @@ MSSound* MSAssetsManager::GetSound(const std::string& soundName) {
     if (sound != this->_sounds.end()) {
         return &(sound->second);
     } else {
+        spdlog::error("Sound '{}' not found", soundName);
         return nullptr;
     }
 }
@@ -241,6 +283,7 @@ MSMusic* MSAssetsManager::GetMusic(const std::string& name) {
     if (music != this->_musics.end()) {
         return &music->second;
     } else {
+        spdlog::error("Music '{}' not found", name);
         return nullptr;
     }
 }
@@ -254,6 +297,7 @@ MSSoundInstance* MSAssetsManager::GetSoundInstance(const std::string& soundName,
             }
         }
     }
+    spdlog::error("Sound instance '{}' with unique ID '{}' not found", soundName, uniqueId);
     return nullptr;
 }
 
@@ -266,6 +310,7 @@ MSSoundInstance* MSAssetsManager::GetIdleSoundInstance(const std::string& soundN
             }
         }
     }
+    spdlog::error("Idle sound instance '{}' not found", soundName);
     return nullptr;
 }
 

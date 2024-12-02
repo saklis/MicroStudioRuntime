@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.29)
 project(MicroStudioRuntime)
 
+set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
 set(RAYLIB_DIR "C:/raylib/raylib-5.0_win32_mingw-w64")
 set(QUICKJS_DIR "C:/quickjs")
+
+find_package(spdlog REQUIRED)
 
 set(HEADER_FILES
         "${PROJECT_SOURCE_DIR}/3rd_party/nlohmann/json.hpp"
@@ -39,4 +42,4 @@ target_link_directories(MicroStudioRuntime PRIVATE
         "${QUICKJS_DIR}/lib/quickjs"
 )
 
-target_link_libraries(MicroStudioRuntime PRIVATE raylib winmm gdi32 quickjs)
+target_link_libraries(MicroStudioRuntime PRIVATE raylib winmm gdi32 quickjs spdlog::spdlog)

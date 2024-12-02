@@ -51,3 +51,4 @@ microstudio/tokenizer.js
 microstudio/transpiler.js
 build/Makefile
 build/MicroStudioRuntime.make
+microstudio.log
