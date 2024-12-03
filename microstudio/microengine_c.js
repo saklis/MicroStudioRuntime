@@ -1281,9 +1281,10 @@ this.Runtime = class Runtime {
         if (this.vm.runner.tick != null) {
             this.vm.runner.tick();
         }
-        if (ds > 0) {
-            return this.watchStep();
-        }
+        // this is for TimeMachine debugging tool
+        // if (ds > 0) {
+        //     return this.watchStep();
+        // }
     }
 
     //if ds != 1

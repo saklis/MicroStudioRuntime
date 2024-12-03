@@ -36,7 +36,7 @@ int main() {
     InitWindow(screenWidth, screenHeight, "MicroStudio Runtime");
     spdlog::info("Window initialized");
 
-    SetTargetFPS(60);
+    //SetTargetFPS(60);
     SetExitKey(KEY_NULL);
 
     InitAudioDevice();
@@ -44,11 +44,11 @@ int main() {
 
     // init window by drawing a single frame. Should be replaced with something more cool.
     // Maybe loading screen with microStudio logo?
-    BeginDrawing();
-    ClearBackground(BLACK);
-    DrawText("Welcome to MicroStudio Runtime! Fees not included ;p", 160, 200, 20, RAYWHITE);
-    EndDrawing();
-    spdlog::info("Frame buffer initialized");
+    // BeginDrawing();
+    // ClearBackground(BLACK);
+    // DrawText("Welcome to MicroStudio Runtime! Fees not included ;p", 160, 200, 20, RAYWHITE);
+    // EndDrawing();
+    // spdlog::info("Frame buffer initialized");
 
     // init runtime
     std::string errorMsg;
@@ -67,6 +67,13 @@ int main() {
     }
     spdlog::info("Game source loaded");
 
+    MSRuntime_ReturnValue loadExtraLibrariesStatus = MSRuntime::LoadExtraLibraries(errorMsg);
+    if (loadExtraLibrariesStatus != OK) {
+        spdlog::error("Failed to load extra libraries: {}", errorMsg);
+        Exit(1);
+    }
+    spdlog::info("Extra libraries loaded");
+
     // Load assets - must be done after InitWindow()!
     MSRuntime_ReturnValue loadAssetsStatus = MSRuntime::LoadAssets(errorMsg);
     if (loadAssetsStatus != OK) {
@@ -82,6 +89,8 @@ int main() {
         Exit(1);
     }
     spdlog::info("Game started");
+
+    float x = 0.0f;
 
     // Main game loop
     MSRuntime_ReturnValue tickStatus = OK;
@@ -101,15 +110,21 @@ int main() {
             }
         }
 
-        // tick MicroStudio
         BeginDrawing();
         tickStatus = MSRuntime::Tick(GetFrameTime(), errorMsg);
-        EndDrawing();
-
         if (tickStatus != OK) {
             spdlog::error("Failed to tick runtime: {}", errorMsg);
             break;
         }
+        // if (IsKeyPressed(KEY_LEFT)) {
+        //     x -= 1.0f;
+        // }
+        // if (IsKeyPressed(KEY_RIGHT)) {
+        //     x += 1.0f;
+        // }
+        // //ClearBackground(BLACK);
+        // MSRuntime::Screen_DrawSprite("keyboard_icon", x, 25, 75, 30);
+        EndDrawing();
     }
 
     spdlog::info("Exiting main loop");

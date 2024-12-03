@@ -22,7 +22,8 @@ enum MSRuntime_ReturnValue {
     ErrorWhileLoadingAssets = 6,
     ErrorWhileUnloadingAssets = 7,
     ErrorWhileStartingGame = 8,
-    ErrorWhileCallingGameTick = 9
+    ErrorWhileCallingGameTick = 9,
+    ErrorWhileRegisteringExternalLibraries = 10
 };
 
 enum MSRuntime_Orientation {
@@ -32,7 +33,7 @@ enum MSRuntime_Orientation {
 
 class MSRuntime {
 public:
-    std::array<std::string, 10> MicroStudioLibraries = {
+    const std::array<std::string, 10> MicroStudioLibraries = {
         "microstudio/compiler.js",
         "microstudio/parser.js",
         "microstudio/processor.js",
@@ -45,9 +46,15 @@ public:
         "microstudio/microengine_c.js" // modified version of microengine.js
     };
 
-    std::array<std::string, 1> GameSourceFiles = {
+    const std::unordered_map<std::string, std::string> KnownExternalLibraries = {
+        {"matterjs", "microstudio/matter.min.js"}
+    };
+
+    const std::array<std::string, 1> GameSourceFiles = {
         "game.js"
     };
+
+    std::vector<std::string> ExtraLibraries = {};
 
     // Initialize the runtime
     static MSRuntime_ReturnValue Init(std::string& errorMsg);
@@ -55,6 +62,8 @@ public:
     static MSRuntime_ReturnValue LoadAssets(std::string& errorMsg);
 
     static MSRuntime_ReturnValue LoadGameSource(std::string& errorMsg);
+
+    static MSRuntime_ReturnValue LoadExtraLibraries(std::string& errorMsg);
 
     static MSRuntime_ReturnValue StartGame(std::string& string);
 
@@ -178,6 +187,8 @@ protected:
     MSRuntime_ReturnValue RegisterJSAPIFunctions(std::string& errorMsg) const;
 
     MSRuntime_ReturnValue RegisterGameSource(std::string& errorMsg) const;
+
+    MSRuntime_ReturnValue RegisterExternalLibraries(std::string& erroMsg);
 
     MSRuntime_ReturnValue RegisterJSFileInQuickJS(const char* filePath, std::string& errorMsg) const;
 

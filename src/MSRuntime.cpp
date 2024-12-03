@@ -58,6 +58,11 @@ MSRuntime_ReturnValue MSRuntime::LoadGameSource(std::string& errorMsg) {
     return instance->RegisterGameSource(errorMsg);
 }
 
+MSRuntime_ReturnValue MSRuntime::LoadExtraLibraries(std::string& errorMsg) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+    return instance->RegisterExternalLibraries(errorMsg);
+}
+
 MSRuntime_ReturnValue MSRuntime::StartGame(std::string& errorMsg) {
     MSRuntime* instance = MSRuntime::GetInstance();
     const char* script = "window.player = new Player();";
@@ -569,6 +574,81 @@ MSRuntime_ReturnValue MSRuntime::RegisterGameSource(std::string& errorMsg) const
     }
 
     return retVal;
+}
+
+MSRuntime_ReturnValue MSRuntime::RegisterExternalLibraries(std::string& erroMsg) {
+    // read list of external libraries from game.js file and store them in ExtraLibraries vector
+
+    JSValue globalObj = JS_GetGlobalObject(_context);
+
+    JSValue msLibs = JS_GetPropertyStr(_context, globalObj, "ms_libs");
+    JS_FreeValue(_context, globalObj);
+
+    if (!JS_IsArray(_context, msLibs)) {
+        JS_FreeValue(_context, msLibs);
+        erroMsg = "Syntax error in game.js file: ms_libs is not an array.";
+        return ErrorWhileRegisteringExternalLibraries;
+    }
+
+    JSValue lenVal = JS_GetPropertyStr(_context, msLibs, "length");
+    if (JS_IsException(lenVal)) {
+        JS_FreeValue(_context, lenVal);
+        JS_FreeValue(_context, msLibs);
+        erroMsg = "Error while getting length of ms_libs array.";
+        return ErrorWhileRegisteringExternalLibraries;
+    }
+
+    uint32_t msLibsLen = 0;
+    if (JS_ToUint32(_context, &msLibsLen, lenVal)) {
+        JS_FreeValue(_context, lenVal);
+        JS_FreeValue(_context, msLibs);
+        erroMsg = "Error while converting length of ms_libs array to uint32.";
+        return ErrorWhileRegisteringExternalLibraries;
+    }
+    JS_FreeValue(_context, lenVal);
+
+    for (uint32_t i = 0; i < msLibsLen; i++) {
+        JSValue element = JS_GetPropertyUint32(_context, msLibs, i);
+        if (JS_IsException(element)) {
+            JS_FreeValue(_context, msLibs);
+            erroMsg = "Error while getting ms_libs[" + std::to_string(i) + "].";
+            return ErrorWhileRegisteringExternalLibraries;
+        }
+
+        if (JS_IsString(element)) {
+            const char* value = JS_ToCString(_context, element);
+            if (value) {
+                this->ExtraLibraries.push_back(value);
+                JS_FreeCString(_context, value);
+            } else {
+                JS_FreeCString(_context, value);
+                JS_FreeValue(_context, element);
+                JS_FreeValue(_context, msLibs);
+                erroMsg = "Syntax error in game.js file: ms_libs[" + std::to_string(i) + "] is not a string.";
+                return ErrorWhileRegisteringExternalLibraries;
+            }
+        } else {
+            JS_FreeValue(_context, element);
+            JS_FreeValue(_context, msLibs);
+            erroMsg = "Syntax error in game.js file: ms_libs[" + std::to_string(i) + "] is not a string.";
+            return ErrorWhileRegisteringExternalLibraries;
+        }
+
+        JS_FreeValue(_context, element);
+    }
+
+    JS_FreeValue(_context, msLibs);
+
+    // list of external libraries stored in ExtraLibraries vector. Register them in QuickJS
+    for (const auto& libName : this->ExtraLibraries) {
+        auto knownLib = KnownExternalLibraries.find(libName);
+        if (knownLib != KnownExternalLibraries.end()) {
+            MSRuntime_ReturnValue retVal = RegisterJSFileInQuickJS(knownLib->second.c_str(), erroMsg);
+            if (retVal != OK) return retVal;
+        }
+    }
+
+    return OK;
 }
 
 MSRuntime_ReturnValue MSRuntime::RegisterJSFileInQuickJS(const char* filePath, std::string& errorMsg) const {
