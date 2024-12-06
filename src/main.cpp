@@ -27,13 +27,13 @@ int main() {
     spdlog::info("Starting MicroStudio Runtime");
 
     // Initialization
-    int screenWidth = 1280;
-    int screenHeight = 720;
+    int defaultScreenWidth = 1280;
+    int defaultScreenHeight = 720;
 
-    spdlog::info("Initializing window with size {}x{}", screenWidth, screenHeight);
+    spdlog::info("Initializing window with size {}x{}", defaultScreenWidth, defaultScreenHeight);
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(screenWidth, screenHeight, "MicroStudio Runtime");
+    InitWindow(defaultScreenWidth, defaultScreenHeight, "MicroStudio Runtime");
     spdlog::info("Window initialized");
 
     SetTargetFPS(60);
@@ -46,7 +46,8 @@ int main() {
     // Maybe loading screen with microStudio logo?
     BeginDrawing();
     ClearBackground(BLACK);
-    DrawText("Welcome to MicroStudio Runtime! Fees not included ;p", 160, 200, 20, RAYWHITE);
+    DrawText("Welcome to MicroStudio Runtime! Fees not included", 250, 250, 30, RAYWHITE);
+    DrawText("Loading...", 250, 300, 20, RAYWHITE);
     EndDrawing();
     spdlog::info("Frame buffer initialized");
 
@@ -100,18 +101,19 @@ int main() {
         if (IsKeyPressed(KEY_ENTER) && (IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT))) {
             int display = GetCurrentMonitor();
             if (IsWindowFullscreen()) {
-                SetWindowSize(1280, 720);
-                SetWindowPosition(GetMonitorWidth(display) / 2 - 640, GetMonitorHeight(display) / 2 - 360);
-                ClearWindowState(FLAG_FULLSCREEN_MODE);
+                ToggleFullscreen();
+                SetWindowSize(defaultScreenWidth, defaultScreenHeight);
+                SetWindowPosition(GetMonitorWidth(display) / 2 - defaultScreenWidth/2, GetMonitorHeight(display) / 2 - defaultScreenHeight/2);
             } else {
                 SetWindowSize(GetMonitorWidth(display), GetMonitorHeight(display));
-                SetWindowPosition(0, 0);
-                SetWindowState(FLAG_FULLSCREEN_MODE);
+                //SetWindowPosition(0, 0);
+                ToggleFullscreen();
             }
         }
+
         // update screen size
-        screenWidth = GetScreenWidth();
-        screenHeight = GetScreenHeight();
+        int screenWidth = GetScreenWidth();
+        int screenHeight = GetScreenHeight();
         MSRuntime::SetScreenSize(screenWidth, screenHeight);
 
         // update keyboard
