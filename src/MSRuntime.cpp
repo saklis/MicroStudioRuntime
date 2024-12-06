@@ -95,6 +95,56 @@ MSRuntime_ReturnValue MSRuntime::Free(std::string& errorMsg) {
     return OK;
 }
 
+MSRuntime_ReturnValue MSRuntime::Render(std::string& errorMsg) {
+    MSRuntime* instance = MSRuntime::GetInstance();
+
+    while (!instance->_renderingQueue.IsEmpty()) {
+        RenderingTask* task = nullptr;
+        if (instance->_renderingQueue.Pop(task)) {
+            switch (task->Type) {
+                case Type_Empty:
+                    break;
+                case Type_ClearBackground: {
+                    ClearBackground(task->Color);
+                }
+                break;
+                case Type_DrawRectanglePro: {
+                    DrawRectanglePro(task->Rec, task->Origin, task->Rotation, task->Color);
+                }
+                break;
+                case Type_DrawTexturePro: {
+                    DrawTexturePro(*task->Texture, task->Source, task->Dest, task->Origin, task->Rotation, task->Color);
+                }
+                break;
+                case Type_DrawTextPro: {
+                    Vector2 textSize = MeasureTextEx(*task->Font, task->Text, task->FontSize, task->Spacing);
+
+                    rlPushMatrix();
+                    rlTranslatef(task->Position.x, task->Position.y, 0); // set position
+                    rlRotatef(instance->_currentDrawRotation, 0, 0, 1);
+                    rlScalef(instance->_currentDrawScale.x, instance->_currentDrawScale.y, 1);
+                    rlTranslatef(-textSize.x / 2, -textSize.y / 2, 0); // center text by moving the origin point
+
+                    DrawTextEx(*task->Font, task->Text, {0, 0}, task->FontSize, task->Spacing, task->Color);
+
+                    rlPopMatrix();
+                }
+                break;
+            }
+        } else {
+            errorMsg = "Error while rendering: queue not empty, but failed to pop task";
+            return ErrorWhileRendering;
+        }
+    }
+
+    instance->_renderingQueue.Clear();
+    return OK;
+}
+
+bool MSRuntime::ShouldClose() {
+    return MSRuntime::GetInstance()->_shouldClose;
+}
+
 void MSRuntime::SetScreenSize(const int screenWidth, const int screenHeight) {
     MSRuntime* instance = MSRuntime::GetInstance();
     instance->_screenWidth = screenWidth;
@@ -129,8 +179,13 @@ void MSRuntime::SetScreenSize(const int screenWidth, const int screenHeight) {
     }
 }
 
+void MSRuntime::Exit() {
+    MSRuntime::GetInstance()->_shouldClose = true;
+}
+
 void MSRuntime::Screen_Clear(const char* colorText) {
-    if (!MSRuntime::GetInstance()->_isRuntimeInitialized) return; // only allow to clear when runtime is initialized
+    MSRuntime* instance = MSRuntime::GetInstance();
+    if (!instance->_isRuntimeInitialized) return; // only allow to clear when runtime is initialized
     Color clearColor;
     if (colorText == nullptr) {
         clearColor = BLACK;
@@ -138,7 +193,7 @@ void MSRuntime::Screen_Clear(const char* colorText) {
         int alpha;
         ParseColor(colorText, &clearColor, &alpha);
     }
-    ClearBackground(clearColor); // raylib
+    instance->_renderingQueue.Push_ClearBackground(clearColor);
 }
 
 void MSRuntime::Screen_SetColor(const char* colorText) {
@@ -157,9 +212,9 @@ void MSRuntime::Screen_SetColor(const char* colorText) {
     }
 }
 
-void MSRuntime::Screen_SetAlpha(int alpha) {
+void MSRuntime::Screen_SetAlpha(float alpha) {
     MSRuntime* instance = MSRuntime::GetInstance();
-    instance->_currentAlpha = alpha;
+    instance->_currentAlpha = static_cast<uint8_t>(alpha * 255.0f); // microstudio uses alpha in range 0.0-1.0
 }
 
 void MSRuntime::Screen_SetFont(const char* font) {
@@ -179,7 +234,7 @@ void MSRuntime::Screen_SetDrawScale(const float scaleX, const float scaleY) {
 }
 
 void MSRuntime::Screen_FillRect(float x, float y, float w, float h, const char* colorText) {
-    const MSRuntime* instance = MSRuntime::GetInstance();
+    MSRuntime* instance = MSRuntime::GetInstance();
 
     float nX, nY, nW, nH;
     instance->CalculateNativeCoordinates(x, y, w, h, &nX, &nY, &nW, &nH);
@@ -194,13 +249,14 @@ void MSRuntime::Screen_FillRect(float x, float y, float w, float h, const char* 
         color.a = instance->_currentAlpha;
     }
 
-    DrawRectanglePro({nX, nY, nW * instance->_currentDrawScale.x, nH * instance->_currentDrawScale.y},
-                     {nW * instance->_currentDrawScale.x / 2, nH * instance->_currentDrawScale.y / 2},
-                     instance->_currentDrawRotation, color);
+    Rectangle rec = {nX, nY, nW * instance->_currentDrawScale.x, nH * instance->_currentDrawScale.y};
+    Vector2 origin = {nW * instance->_currentDrawScale.x / 2, nH * instance->_currentDrawScale.y / 2};
+
+    instance->_renderingQueue.Push_DrawRectanglePro(rec, origin, instance->_currentDrawRotation, color);
 }
 
 void MSRuntime::Screen_DrawSprite(const char* sprite, const float x, const float y, const float w, const float h) {
-    const MSRuntime* instance = MSRuntime::GetInstance();
+    MSRuntime* instance = MSRuntime::GetInstance();
 
     // 'sprite' string may include '.' that separates sprite's name and frame number
     const char* dotPosition = strrchr(sprite, '.');
@@ -235,16 +291,16 @@ void MSRuntime::Screen_DrawSprite(const char* sprite, const float x, const float
         sourceRec.height = static_cast<float>(ms_sprite->FrameHeight);
     }
 
-    DrawTexturePro(ms_sprite->Texture,
-                   sourceRec,
-                   {nX, nY, nW * instance->_currentDrawScale.x, nH * instance->_currentDrawScale.y},
-                   {nW / 2, nH / 2},
-                   instance->_currentDrawRotation, tint);
+    Rectangle dest = {nX, nY, nW * instance->_currentDrawScale.x, nH * instance->_currentDrawScale.y};
+    Vector2 origin = {nW / 2, nH / 2};
+
+    instance->_renderingQueue.Push_DrawTexturePro(&ms_sprite->Texture, sourceRec, dest, origin,
+                                                  instance->_currentDrawRotation, tint);
 }
 
 void MSRuntime::Screen_DrawSpritePart(const char* sprite, const float px, const float py, const float pw,
                                       const float ph, const float x, const float y, const float w, const float h) {
-    const MSRuntime* instance = MSRuntime::GetInstance();
+    MSRuntime* instance = MSRuntime::GetInstance();
 
     const MSSprite* ms_sprite = instance->_assets->GetSprite(sprite);
     if (!ms_sprite) return; // if the sprite doesn't exist, return
@@ -255,11 +311,12 @@ void MSRuntime::Screen_DrawSpritePart(const char* sprite, const float px, const 
     Color tint = instance->_currentColor;
     tint.a = instance->_currentAlpha;
 
-    DrawTexturePro(ms_sprite->Texture,
-                   {px, py, pw, ph},
-                   {nX, nY, nW * instance->_currentDrawScale.x, nH * instance->_currentDrawScale.y},
-                   {nW / 2, nH / 2},
-                   instance->_currentDrawRotation, tint);
+    Rectangle source = {px, py, pw, ph};
+    Rectangle dest = {nX, nY, nW * instance->_currentDrawScale.x, nH * instance->_currentDrawScale.y};
+    Vector2 origin = {nW / 2, nH / 2};
+
+    instance->_renderingQueue.Push_DrawTexturePro(&ms_sprite->Texture, source, dest, origin,
+                                                  instance->_currentDrawRotation, tint);
 }
 
 void MSRuntime::Screen_DrawMap(const char* name, const float x, const float y, const float w, const float h) {
@@ -284,7 +341,26 @@ void MSRuntime::Screen_DrawMap(const char* name, const float x, const float y, c
             float worldY = static_cast<float>(mapY) * scaledBlockHeight + MAP_TO_WORLD_Y;
             float worldWidth = scaledBlockWidth;
             float worldHeight = scaledBlockHeight;
-            MSRuntime::Screen_DrawSprite(spriteName.c_str(), worldX, worldY, worldWidth, worldHeight);
+
+            uint32_t semicolonIndex = spriteName.find(':');
+            if (semicolonIndex == std::string::npos) {
+                MSRuntime::Screen_DrawSprite(spriteName.c_str(), worldX, worldY, worldWidth, worldHeight);
+            } else {
+                // asset:7,3
+                std::string assetName = spriteName.substr(0, semicolonIndex);
+                std::string assetData = spriteName.substr(semicolonIndex + 1);
+                std::string::size_type commaIndex = assetData.find(',');
+                if (commaIndex == std::string::npos) {
+                    spdlog::warn("Strange state in DrawMap. Asset data doesn't contain comma. Asset: {}", spriteName);
+                    MSRuntime::Screen_DrawSprite(assetName.c_str(), worldX, worldY, worldWidth, worldHeight);
+                } else {
+                    float px = std::stof(assetData.substr(0, commaIndex));
+                    float py = std::stof(assetData.substr(commaIndex + 1));
+                    MSRuntime::Screen_DrawSpritePart(assetName.c_str(), px * map->BlockWidth, py * map->BlockHeight,
+                                                     map->BlockWidth, map->BlockHeight, worldX, worldY, worldWidth,
+                                                     worldHeight);
+                }
+            }
         }
     }
 }
@@ -303,7 +379,7 @@ void MSRuntime::Screen_DrawText(const char* text, const float x, const float y, 
         color.a = instance->_currentAlpha;
     }
 
-    const Font* font = instance->_assets->GetFont(instance->_currentFont);
+    Font* font = instance->_assets->GetFont(instance->_currentFont);
     if (font == nullptr) return; // if the font doesn't exist, return
 
     float n_x = 0.0f, n_y = 0.0f;
@@ -320,17 +396,8 @@ void MSRuntime::Screen_DrawText(const char* text, const float x, const float y, 
     // maybe because of the requirement of the clear type fonts to be loaded in big size?
     // font scaling is still not quite correct
 
-    Vector2 textSize = MeasureTextEx(*font, text, scaledSize, 0);
-
-    rlPushMatrix();
-    rlTranslatef(n_x, n_y, 0); // set position
-    rlRotatef(instance->_currentDrawRotation, 0, 0, 1);
-    rlScalef(instance->_currentDrawScale.x, instance->_currentDrawScale.y, 1);
-    rlTranslatef(-textSize.x / 2, -textSize.y / 2, 0); // center text by moving the origin point
-
-    DrawTextPro(*font, text, {0, 0}, {0, 0}, 0, scaledSize, 0, color);
-
-    rlPopMatrix();
+    instance->_renderingQueue.Push_DrawTextPro(font, text, {n_x, n_y}, {0, 0}, instance->_currentDrawRotation,
+                                               scaledSize, 0, color);
 }
 
 bool MSRuntime::Screen_IsFontReady(const char* font_name) {
@@ -640,7 +707,7 @@ MSRuntime_ReturnValue MSRuntime::RegisterExternalLibraries(std::string& erroMsg)
     JS_FreeValue(_context, msLibs);
 
     // list of external libraries stored in ExtraLibraries vector. Register them in QuickJS
-    for (const auto& libName : this->ExtraLibraries) {
+    for (const auto& libName: this->ExtraLibraries) {
         auto knownLib = KnownExternalLibraries.find(libName);
         if (knownLib != KnownExternalLibraries.end()) {
             MSRuntime_ReturnValue retVal = RegisterJSFileInQuickJS(knownLib->second.c_str(), erroMsg);

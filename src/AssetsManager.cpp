@@ -248,7 +248,7 @@ const MSSprite* MSAssetsManager::GetSprite(const std::string& sprite) {
     }
 }
 
-const Font* MSAssetsManager::GetFont(const std::string& fontName) {
+Font* MSAssetsManager::GetFont(const std::string& fontName) {
     auto font = this->_fonts.find(fontName);
     if (font != this->_fonts.end()) {
         return &(font->second);

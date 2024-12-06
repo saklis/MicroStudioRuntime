@@ -29,7 +29,7 @@ public:
 
     const MSSprite* GetSprite(const std::string& sprite);
 
-    const Font* GetFont(const std::string& fontName);
+    Font* GetFont(const std::string& fontName);
 
     const MSMap* GetMap(const std::string& mapName);
 

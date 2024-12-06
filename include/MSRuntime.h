@@ -11,6 +11,7 @@
 #include "quickjs.h"
 
 #include "AssetsManager.h"
+#include "RenderingQueue.h"
 
 enum MSRuntime_ReturnValue {
     OK = 0,
@@ -23,7 +24,8 @@ enum MSRuntime_ReturnValue {
     ErrorWhileUnloadingAssets = 7,
     ErrorWhileStartingGame = 8,
     ErrorWhileCallingGameTick = 9,
-    ErrorWhileRegisteringExternalLibraries = 10
+    ErrorWhileRegisteringExternalLibraries = 10,
+    ErrorWhileRendering = 11
 };
 
 enum MSRuntime_Orientation {
@@ -69,6 +71,10 @@ public:
 
     static MSRuntime_ReturnValue Free(std::string& errorMsg);
 
+    static MSRuntime_ReturnValue Render(std::string& errorMsg);
+
+    static bool ShouldClose();
+
     // Set the screen size and orientation
     static void SetScreenSize(int screenWidth, int screenHeight);
 
@@ -87,12 +93,15 @@ public:
     //////////////////////////////////////////////////////////////////////////////////////////
     // MICROSTUDIO API
 
+    // SYSTEM
+    static void Exit();
+
     // SCREEN
     static void Screen_Clear(const char* colorText);
 
     static void Screen_SetColor(const char* colorText);
 
-    static void Screen_SetAlpha(int alpha);
+    static void Screen_SetAlpha(float alpha);
 
     static void Screen_SetFont(const char* font);
 
@@ -141,6 +150,7 @@ public:
 
 protected:
     bool _isRuntimeInitialized = false; // switched to true when JS runtime is initialized
+    bool _shouldClose = false;
 
     // QuickJS runtime - those are initialized in MSRuntime::Init. App SHOULD close, if initialization fails.
     JSRuntime* _runtime = nullptr;
@@ -159,7 +169,7 @@ protected:
     Color _currentColor = WHITE;
 
     // Current draw alpha - set by Screen_SetColor and directly by Screen_SetAlpha
-    int _currentAlpha = 255;
+    uint8_t _currentAlpha = 255;
 
     // Current font for drawing text
     std::string _currentFont = "BitCell";
@@ -169,6 +179,8 @@ protected:
 
     // Current draw scale
     Vector2 _currentDrawScale = {1.0f, 1.0f};
+
+    RenderingQueue _renderingQueue = RenderingQueue(1024);
 
     // Calculates native coordinates from coords in microstudio
     void CalculateNativeCoordinates(float x, float y, float* n_x, float* n_y) const;

@@ -992,18 +992,18 @@ this.Runtime = class Runtime {
         //   global.BABYLON = BABYLON;
         //   BABYLON.runtime = this;
         // }
-        // ref = window.ms_libs;
-        // for (j = 0, len1 = ref.length; j < len1; j++) {
-        //   lib = ref[j];
-        //   lib = lib.split("_")[0];
-        //   switch (lib) {
-        //     case "matterjs":
-        //       global.Matter = Matter;
-        //       break;
-        //     case "cannonjs":
-        //       global.CANNON = CANNON;
-        //   }
-        // }
+        ref = window.ms_libs;
+        for (j = 0, len1 = ref.length; j < len1; j++) {
+          lib = ref[j];
+          lib = lib.split("_")[0];
+          switch (lib) {
+            case "matterjs":
+              global.Matter = Matter;
+              break;
+            case "cannonjs":
+              global.CANNON = CANNON;
+          }
+        }
         // namespace = location.pathname;
 
         //this.vm = new MicroVM(meta, global, namespace, location.hash === "#transpiler");
@@ -1015,9 +1015,10 @@ this.Runtime = class Runtime {
         // this.vm.context.global.system.pause = () => {
         //   return this.listener.codePaused();
         // };
-        // this.vm.context.global.system.exit = () => {
-        //   return this.exit();
-        // };
+        this.vm.context.global.system.exit = () => {
+            CExit();
+            return this.exit();
+        };
         // if (!window.ms_async_load) {
         //   this.vm.context.global.system.loading = 100;
         // }

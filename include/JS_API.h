@@ -47,6 +47,11 @@ static JSValue JS_Break(JSContext* ctx, JSValueConst this_val, int argc, JSValue
     return JS_UNDEFINED;
 }
 
+static JSValue JS_Exit(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
+    MSRuntime::Exit();
+    return JS_UNDEFINED;
+}
+
 static JSValue JS_Clear(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
     const char* colorText = JS_ToCString(ctx, argv[0]);
 
@@ -66,9 +71,9 @@ static JSValue JS_SetColor(JSContext* ctx, JSValueConst this_val, int argc, JSVa
 }
 
 static JSValue JS_SetAlpha(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv) {
-    int alpha;
-    JS_ToInt32(ctx, &alpha, argv[0]);
-    MSRuntime::Screen_SetAlpha(alpha);
+    double alpha;
+    JS_ToFloat64(ctx, &alpha, argv[0]);
+    MSRuntime::Screen_SetAlpha(static_cast<float>(alpha));
     return JS_UNDEFINED;
 }
 
@@ -341,13 +346,16 @@ static JSValue JS_GetImage(JSContext* ctx, JSValueConst this_val, int argc, JSVa
     return image; // if image is an exception, it'll get propagated to the caller
 }
 
-static const JSCFunctionListEntry js_raylib_funcs[25] = {
+static const JSCFunctionListEntry js_raylib_funcs[26] = {
     JS_CFUNC_DEF("CBreak", 1, JS_Break),
     JS_CFUNC_DEF("CConsoleInfo", 1, JS_ConsoleInfo),
     JS_CFUNC_DEF("CConsoleError", 1, JS_ConsoleError),
 
     JS_CFUNC_DEF("CRuntimeInitialized", 0, JS_RuntimeInitialized),
     JS_CFUNC_DEF("CGetImage", 1, JS_GetImage),
+
+    // system
+    JS_CFUNC_DEF("CExit", 0, JS_Exit),
 
     // screen
     JS_CFUNC_DEF("CClear", 1, JS_Clear),

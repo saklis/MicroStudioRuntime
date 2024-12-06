@@ -20,12 +20,14 @@ set(HEADER_FILES
         "${PROJECT_SOURCE_DIR}/include/MSSound.h"
         "${PROJECT_SOURCE_DIR}/include/MSAudioStream.h"
         "${PROJECT_SOURCE_DIR}/include/MSMusic.h"
+        "${PROJECT_SOURCE_DIR}/include/RenderingQueue.h"
 )
 
 set(SOURCE_FILES
         "${PROJECT_SOURCE_DIR}/src/main.cpp"
         "${PROJECT_SOURCE_DIR}/src/AssetsManager.cpp"
         "${PROJECT_SOURCE_DIR}/src/MSRuntime.cpp"
+        "${PROJECT_SOURCE_DIR}/src/RenderingQueue.cpp"
 )
 
 add_executable(MicroStudioRuntime ${SOURCE_FILES} ${HEADER_FILES})

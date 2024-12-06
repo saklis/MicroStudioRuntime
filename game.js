@@ -10,6 +10,7 @@ window.ms_use_server = false ;
 // deprecated extra global variables?
 window.orientation = orientation;
 window.aspect = aspect;
+window.ms_libs = ms_libs;
 
 window.fonts = ["BitCell","Edunline","EnterCommand","Pixellari","Pixolde","PressStart2P","RetroGaming","Romulus"];
 var resources = {
@@ -2832,7 +2833,7 @@ end
 
 // MicroStudio.draw function
 draw = function()
-  //screen.clear()
+  screen.clear()
   
   if GameState == "INPUTSELECT" then Input.Draw() end
   if GameState == "MAINMENU" then Menu.Draw() end
