@@ -27,7 +27,7 @@ int main() {
     spdlog::info("Starting MicroStudio Runtime");
 
     // Initialization
-    int screenWidth = 1368;
+    int screenWidth = 1280;
     int screenHeight = 720;
 
     spdlog::info("Initializing window with size {}x{}", screenWidth, screenHeight);
@@ -97,6 +97,18 @@ int main() {
     // Main game loop
     while (!WindowShouldClose() && !MSRuntime::ShouldClose()) // Detect window close button or Exit key
     {
+        if (IsKeyPressed(KEY_ENTER) && (IsKeyDown(KEY_LEFT_ALT) || IsKeyDown(KEY_RIGHT_ALT))) {
+            int display = GetCurrentMonitor();
+            if (IsWindowFullscreen()) {
+                SetWindowSize(1280, 720);
+                SetWindowPosition(GetMonitorWidth(display) / 2 - 640, GetMonitorHeight(display) / 2 - 360);
+                ClearWindowState(FLAG_FULLSCREEN_MODE);
+            } else {
+                SetWindowSize(GetMonitorWidth(display), GetMonitorHeight(display));
+                SetWindowPosition(0, 0);
+                SetWindowState(FLAG_FULLSCREEN_MODE);
+            }
+        }
         // update screen size
         screenWidth = GetScreenWidth();
         screenHeight = GetScreenHeight();
