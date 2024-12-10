@@ -7,7 +7,6 @@ window.skip_service_worker = true;
 window.exported_project = true;
 window.ms_use_server = false ;
 
-// deprecated extra global variables?
 window.orientation = orientation;
 window.aspect = aspect;
 window.ms_libs = ms_libs;

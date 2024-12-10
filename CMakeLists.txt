@@ -1,11 +1,24 @@
 cmake_minimum_required(VERSION 3.29)
 project(MicroStudioRuntime)
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
-set(CMAKE_CXX_EXTENSIONS ON)
+# CONFIGURATION SECTION
 
 set(RAYLIB_DIR "C:/raylib/raylib-5.0_win32_mingw-w64")
 set(QUICKJS_DIR "C:/quickjs")
+
+set(MSYS_MINGW32_BIN_DIR "C:/msys64/mingw32/bin")
+set(MSYS_DLLS
+        "${MSYS_MINGW32_BIN_DIR}/LIBSTDC++-6.DLL"
+        "${MSYS_MINGW32_BIN_DIR}/LIBGCC_S_DW2-1.DLL"
+        "${MSYS_MINGW32_BIN_DIR}/LIBWINPTHREAD-1.DLL"
+        "${MSYS_MINGW32_BIN_DIR}/LIBFMT-11.DLL"
+        "${MSYS_MINGW32_BIN_DIR}/LIBSPDLOG.DLL"
+)
+
+# CONFIGURATION SECTION END
+
+set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_CXX_EXTENSIONS ON)
 
 find_package(spdlog REQUIRED)
 
@@ -45,3 +58,12 @@ target_link_directories(MicroStudioRuntime PRIVATE
 )
 
 target_link_libraries(MicroStudioRuntime PRIVATE raylib winmm gdi32 quickjs spdlog::spdlog)
+
+foreach(dll_file IN LISTS MSYS_DLLS)
+    add_custom_command(TARGET MicroStudioRuntime POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${dll_file}"
+            "$<TARGET_FILE_DIR:MicroStudioRuntime>/"
+            VERBATIM
+    )
+endforeach()

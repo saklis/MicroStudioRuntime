@@ -103,11 +103,15 @@ int main() {
             if (IsWindowFullscreen()) {
                 ToggleFullscreen();
                 SetWindowSize(defaultScreenWidth, defaultScreenHeight);
-                SetWindowPosition(GetMonitorWidth(display) / 2 - defaultScreenWidth/2, GetMonitorHeight(display) / 2 - defaultScreenHeight/2);
+                SetWindowPosition(GetMonitorWidth(display) / 2 - defaultScreenWidth / 2,
+                                  GetMonitorHeight(display) / 2 - defaultScreenHeight / 2);
+                spdlog::debug("Toggle fullscreen OFF. Window size: {}x{}", defaultScreenWidth, defaultScreenHeight);
             } else {
                 SetWindowSize(GetMonitorWidth(display), GetMonitorHeight(display));
                 //SetWindowPosition(0, 0);
                 ToggleFullscreen();
+                spdlog::debug("Toggle fullscreen ON. Monitor size: {}x{}", GetMonitorWidth(display),
+                              GetMonitorHeight(display));
             }
         }
 
@@ -119,8 +123,10 @@ int main() {
         // update keyboard
         for (int key = KEY_SPACE; key <= KEY_KB_MENU; key++) {
             if (IsKeyPressed(key)) {
+                spdlog::debug("Key pressed: {}", key);
                 MSRuntime::UpdateKeyboard(key, true);
             } else if (IsKeyReleased(key)) {
+                spdlog::debug("key released: {}", key);
                 MSRuntime::UpdateKeyboard(key, false);
             }
         }
