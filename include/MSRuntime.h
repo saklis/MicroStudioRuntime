@@ -8,7 +8,7 @@
 #include "raylib.h"
 #include "rlgl.h"
 
-#include "quickjs.h"
+#include <quickjs/quickjs.h>
 
 #include "AssetsManager.h"
 #include "RenderingQueue.h"

@@ -1,11 +1,11 @@
 ﻿#pragma once
 
-#include <quickjs.h>
+#include <quickjs/quickjs.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 #include "MSAudioStream.h"
 
 #include "MSSprite.h"

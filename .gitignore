@@ -35,6 +35,7 @@
 .idea/*
 
 # build output
+/cmake-build-debug-winlibs-ucrt-32bit
 /cmake-build-debug
 /build
 

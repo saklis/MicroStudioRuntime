@@ -180,6 +180,7 @@ void MSRuntime::SetScreenSize(const int screenWidth, const int screenHeight) {
 }
 
 void MSRuntime::Exit() {
+    spdlog::info("Closing the game...");
     MSRuntime::GetInstance()->_shouldClose = true;
 }
 

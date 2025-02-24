@@ -1,41 +1,32 @@
 @echo off
 
-REM Set the compiler paths
-set CC=C:/msys64/mingw32/bin/gcc.exe
-set CXX=C:/msys64/mingw32/bin/g++.exe
+REM ----------------------------------------------------------------------------
+REM  build.bat
+REM
+REM  1. Creates a "build" directory if it doesn't already exist.
+REM  2. Runs CMake to configure the project with the chosen generator.
+REM  3. Builds the project in the specified configuration (Debug by default).
+REM ----------------------------------------------------------------------------
 
-REM Remove the existing build directory for a clean build
-if exist build (
-    rmdir /s /q build
-)
-mkdir build
-if exist MicroStudioRuntime.exe (
-    del MicroStudioRuntime.exe
-)
+echo === Building MicroStudioRuntime with CMake ===
 
-REM Navigate to the build directory
+REM Step 1: Create and enter the build directory
+if not exist build (
+    mkdir build
+)
 cd build
 
-REM Run CMake to configure the project
-cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release ..
-if %errorlevel% neq 0 (
-    echo CMake configuration failed.
-    exit /b %errorlevel%
-)
+REM Step 2: Configure the project
+cmake -G "MinGW Makefiles" ^
+  -DCMAKE_C_COMPILER="C:/cpp/mingw32-winlibs/bin/gcc.exe" ^
+  -DCMAKE_CXX_COMPILER="C:/cpp/mingw32-winlibs/bin/g++.exe" ^
+  -DCMAKE_BUILD_TYPE=Debug ..
 
-REM Build the project using mingw32-make with parallel jobs
-mingw32-make -j %NUMBER_OF_PROCESSORS%
-if %errorlevel% neq 0 (
-    echo Build failed.
-    exit /b %errorlevel%
-)
+REM Step 3: Build the project
+cmake --build . --config Debug
 
-REM Return to the root directory
 cd ..
+echo === Build finished ===
 
-REM Move the resulting executable to the project's root folder
-if exist build\MicroStudioRuntime.exe (
-    move /Y build\MicroStudioRuntime.exe .
-)
-
-echo Build completed successfully.
+REM Keep the window open if running by double-click
+pause

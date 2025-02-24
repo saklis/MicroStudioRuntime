@@ -23,6 +23,7 @@ int main() {
     spdlog::set_default_logger(logger);
     spdlog::set_level(spdlog::level::debug);
     spdlog::set_pattern("[%Y-%m-%d %H:%M:%S] [%l] %v");
+    spdlog::flush_on(spdlog::level::trace);
 
     spdlog::info("Starting MicroStudio Runtime");
 
@@ -123,10 +124,8 @@ int main() {
         // update keyboard
         for (int key = KEY_SPACE; key <= KEY_KB_MENU; key++) {
             if (IsKeyPressed(key)) {
-                spdlog::debug("Key pressed: {}", key);
                 MSRuntime::UpdateKeyboard(key, true);
             } else if (IsKeyReleased(key)) {
-                spdlog::debug("key released: {}", key);
                 MSRuntime::UpdateKeyboard(key, false);
             }
         }
